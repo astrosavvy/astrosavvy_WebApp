@@ -1652,11 +1652,321 @@ async def local_scheduled_worker_loop():
         await asyncio.sleep(60) # check every minute
 
 
+# ============================================================
+#   SHOP & ASTRO VASTU ROUTES (/api/shop/*)
+# ============================================================
+from src.services.shop_service import ShopService
+from src.services.blog_service import BlogService
+from src.services.shop_auth_service import ShopAuthService
+
+shop_service = ShopService()
+blog_service = BlogService()
+shop_auth_service = ShopAuthService()
+
+# --- Products ---
+@app.get("/api/shop/products")
+async def api_get_products(category: Optional[str] = None):
+    products = shop_service.get_public_products(category)
+    return {"success": True, "count": len(products), "products": products}
+
+@app.get("/api/shop/products/admin/all")
+async def api_get_products_admin(authorization: Optional[str] = Header(None)):
+    products = shop_service.get_all_products_admin()
+    return {"success": True, "count": len(products), "products": products}
+
+@app.get("/api/shop/products/{slug}")
+async def api_get_product_by_slug(slug: str):
+    prod = shop_service.get_product_by_slug(slug)
+    if not prod:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"success": True, "product": prod}
+
+@app.post("/api/shop/products/admin/add")
+async def api_add_product(req: Request, authorization: Optional[str] = Header(None)):
+    data = await req.json()
+    new_prod = shop_service.create_product(data)
+    return {"success": True, "product": new_prod}
+
+@app.put("/api/shop/products/admin/{product_id}")
+async def api_update_product(product_id: str, req: Request, authorization: Optional[str] = Header(None)):
+    data = await req.json()
+    updated = shop_service.update_product(product_id, data)
+    return {"success": True, "product": updated}
+
+@app.delete("/api/shop/products/admin/{product_id}")
+async def api_delete_product(product_id: str, authorization: Optional[str] = Header(None)):
+    shop_service.delete_product(product_id)
+    return {"success": True, "message": "Product deleted successfully"}
+
+@app.patch("/api/shop/products/admin/{product_id}/toggle")
+async def api_toggle_product(product_id: str, authorization: Optional[str] = Header(None)):
+    updated = shop_service.toggle_product_active(product_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"success": True, "product": updated}
+
+# --- Payment & Razorpay ---
+@app.post("/api/shop/payment/create-order")
+async def api_shop_create_order(req: Request):
+    body = await req.json()
+    amount = body.get("amount")
+    if not amount or amount <= 0:
+        raise HTTPException(status_code=400, detail="Valid amount is required")
+    payment_srv = PaymentService()
+    try:
+        rz_order = payment_srv.create_razorpay_order(amount, currency="INR", receipt=f"shop_{int(time.time())}")
+        return {"success": True, "order": rz_order}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {e}")
+
+@app.post("/api/shop/payment/verify")
+async def api_shop_verify_payment(req: Request):
+    body = await req.json()
+    razorpay_order_id = body.get("razorpay_order_id")
+    razorpay_payment_id = body.get("razorpay_payment_id")
+    razorpay_signature = body.get("razorpay_signature")
+    order_type = str(body.get("orderType", "")).lower()
+    amount = body.get("amount")
+    kundli_data = body.get("kundliData")
+    cart_items = body.get("cartItems", [])
+    customer = body.get("customer", {})
+
+    if not razorpay_order_id or not razorpay_payment_id or not razorpay_signature:
+        raise HTTPException(status_code=400, detail="Missing payment details")
+
+    payment_srv = PaymentService()
+    verified = payment_srv.verify_payment_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+    if not verified:
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    if order_type == "kundli":
+        if not kundli_data:
+            raise HTTPException(status_code=400, detail="Kundli data missing")
+        saved_kundli = shop_service.create_kundli_request({
+            "full_name": kundli_data.get("fullName"),
+            "email": kundli_data.get("email"),
+            "phone": kundli_data.get("phone"),
+            "date_of_birth": kundli_data.get("dateOfBirth"),
+            "time_of_birth": kundli_data.get("timeOfBirth"),
+            "place_of_birth": kundli_data.get("placeOfBirth"),
+            "gender": kundli_data.get("gender"),
+            "message": kundli_data.get("message", ""),
+            "payment_status": "paid",
+            "razorpay_order_id": razorpay_order_id,
+            "razorpay_payment_id": razorpay_payment_id,
+            "delivery_status": "pending"
+        })
+        return {"success": True, "message": "Kundli saved successfully", "data": saved_kundli}
+
+    if order_type == "product":
+        if not cart_items:
+            raise HTTPException(status_code=400, detail="Cart items missing")
+        orders_to_save = []
+        for item in cart_items:
+            cat = str(item.get("category", "")).lower()
+            if cat not in ["bracelet", "rudraksha", "potli"]:
+                cat = "product"
+            orders_to_save.append({
+                "product_name": item.get("name") or item.get("title") or "Product",
+                "product_price": item.get("price", 0),
+                "product_category": cat,
+                "customer_name": customer.get("name", "Customer"),
+                "email": customer.get("email", ""),
+                "phone": customer.get("phone", ""),
+                "address": customer.get("address", ""),
+                "payment_id": razorpay_payment_id,
+                "payment_status": "paid",
+                "order_status": "received"
+            })
+        saved_orders = shop_service.create_shop_orders(orders_to_save)
+        return {"success": True, "message": "Product order saved successfully", "orders": saved_orders}
+
+    raise HTTPException(status_code=400, detail="Invalid order type")
+
+# --- Kundli Requests ---
+@app.post("/api/shop/kundli")
+async def api_submit_kundli(req: Request):
+    data = await req.json()
+    k_req = shop_service.create_kundli_request({
+        "full_name": data.get("fullName"),
+        "email": data.get("email"),
+        "phone": data.get("phone"),
+        "date_of_birth": data.get("dateOfBirth"),
+        "time_of_birth": data.get("timeOfBirth"),
+        "place_of_birth": data.get("placeOfBirth"),
+        "gender": data.get("gender"),
+        "message": data.get("message", ""),
+        "payment_status": "pending"
+    })
+    return {"success": True, "data": k_req}
+
+@app.get("/api/shop/kundli/paid")
+async def api_get_paid_kundlis(authorization: Optional[str] = Header(None)):
+    kundlis = shop_service.get_paid_kundlis()
+    return {"success": True, "data": kundlis}
+
+@app.patch("/api/shop/orders/kundli/{kundli_id}/status")
+async def api_update_kundli_status(kundli_id: str, req: Request, authorization: Optional[str] = Header(None)):
+    body = await req.json()
+    status = body.get("deliveryStatus") or body.get("status")
+    if not status:
+        raise HTTPException(status_code=400, detail="Delivery status required")
+    updated = shop_service.update_kundli_delivery_status(kundli_id, status)
+    return {"success": True, "data": updated}
+
+# --- Shop Orders ---
+@app.get("/api/shop/orders")
+async def api_get_shop_orders(category: Optional[str] = None, authorization: Optional[str] = Header(None)):
+    orders = shop_service.get_shop_orders(category)
+    return {"success": True, "count": len(orders), "orders": orders}
+
+@app.patch("/api/shop/orders/{order_id}/status")
+async def api_update_shop_order_status(order_id: str, req: Request, authorization: Optional[str] = Header(None)):
+    body = await req.json()
+    status = body.get("orderStatus") or body.get("status")
+    if not status:
+        raise HTTPException(status_code=400, detail="Order status required")
+    updated = shop_service.update_shop_order_status(order_id, status)
+    return {"success": True, "order": updated}
+
+# --- Blogs ---
+@app.get("/api/shop/blogs")
+async def api_get_blogs():
+    blogs = blog_service.get_published_blogs()
+    return {"success": True, "blogs": blogs}
+
+@app.get("/api/shop/blogs/admin/all")
+async def api_get_blogs_admin(authorization: Optional[str] = Header(None)):
+    blogs = blog_service.get_all_blogs_admin()
+    return {"success": True, "blogs": blogs}
+
+@app.get("/api/shop/blogs/{identifier}")
+async def api_get_blog_by_id_or_slug(identifier: str):
+    blog = blog_service.get_blog_by_slug(identifier)
+    if not blog:
+        blog = blog_service.get_blog_by_id(identifier)
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    return {"success": True, "blog": blog}
+
+@app.post("/api/shop/blogs")
+async def api_create_blog(req: Request, authorization: Optional[str] = Header(None)):
+    data = await req.json()
+    blog = blog_service.create_blog({
+        "title": data.get("title"),
+        "slug": data.get("slug"),
+        "excerpt": data.get("excerpt", ""),
+        "content": data.get("content", ""),
+        "cover_image": data.get("coverImage") or data.get("cover_image", ""),
+        "author": data.get("author", "Admin"),
+        "is_published": data.get("isPublished", True)
+    })
+    return {"success": True, "blog": blog}
+
+@app.put("/api/shop/blogs/{blog_id}")
+async def api_update_blog(blog_id: str, req: Request, authorization: Optional[str] = Header(None)):
+    data = await req.json()
+    blog = blog_service.update_blog(blog_id, {
+        "title": data.get("title"),
+        "slug": data.get("slug"),
+        "excerpt": data.get("excerpt"),
+        "content": data.get("content"),
+        "cover_image": data.get("coverImage") or data.get("cover_image"),
+        "author": data.get("author"),
+        "is_published": data.get("isPublished")
+    })
+    return {"success": True, "blog": blog}
+
+@app.delete("/api/shop/blogs/{blog_id}")
+async def api_delete_blog(blog_id: str, authorization: Optional[str] = Header(None)):
+    blog_service.delete_blog(blog_id)
+    return {"success": True, "message": "Blog deleted successfully"}
+
+# --- User Auth (OTP) ---
+@app.post("/api/shop/user/send-otp")
+async def api_shop_send_otp(req: Request):
+    body = await req.json()
+    name = body.get("name", "Customer")
+    email = body.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    otp = shop_auth_service.generate_and_save_otp(name, email)
+    email_srv = EmailService()
+    email_srv.send_otp_email(email, name, otp)
+    return {"success": True, "message": "OTP sent to your email"}
+
+@app.post("/api/shop/user/verify-otp")
+async def api_shop_verify_otp(req: Request):
+    body = await req.json()
+    email = body.get("email")
+    otp = body.get("otp")
+    if not email or not otp:
+        raise HTTPException(status_code=400, detail="Email and OTP are required")
+    result = shop_auth_service.verify_otp(email, otp)
+    if not result:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    return {"success": True, "token": result["token"], "user": result["user"]}
+
+@app.get("/api/shop/user/me")
+async def api_shop_get_me(authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    token = authorization.split(" ")[1]
+    payload = shop_auth_service.verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return {"success": True, "user": payload}
+
+@app.get("/api/shop/user/dashboard")
+async def api_shop_user_dashboard(authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    token = authorization.split(" ")[1]
+    payload = shop_auth_service.verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user_email = payload.get("email")
+    supabase_srv = SupabaseService()
+    k_res = supabase_srv.client.table("kundli_requests").select("*").eq("email", user_email).order("created_at", desc=True).execute()
+    o_res = supabase_srv.client.table("shop_orders").select("*").eq("email", user_email).order("created_at", desc=True).execute()
+    return {"success": True, "kundlis": k_res.data or [], "orders": o_res.data or []}
+
+# --- Shop Admin Auth ---
+@app.post("/api/shop/admin/login")
+async def api_shop_admin_login(req: Request):
+    body = await req.json()
+    email = body.get("email")
+    password = body.get("password")
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password required")
+    res = shop_auth_service.admin_login(email, password)
+    if not res:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"success": True, "token": res["token"], "role": res["role"]}
+
+
+async def render_keep_alive_loop():
+    """Background task to self-ping server every 10 minutes so Render free tier never sleeps."""
+    print("[KeepAlive] Continuous ping worker loop started.")
+    import urllib.request
+    while True:
+        try:
+            await asyncio.sleep(600) # Ping every 10 minutes
+            url = "http://127.0.0.1:8000/api/health"
+            req = urllib.request.Request(url, headers={"User-Agent": "RenderKeepAlive/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                pass
+        except Exception as e:
+            pass
+
+
 @app.on_event("startup")
 async def startup_event():
     # Only start local thread if we are not running under a serverless environment
     if not os.getenv("VERCEL") and not os.environ.get("AMAZON_AWS_LAMBDA_STAGE"):
         asyncio.create_task(local_scheduled_worker_loop())
+        asyncio.create_task(render_keep_alive_loop())
+
 
 
 if __name__ == "__main__":

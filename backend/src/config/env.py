@@ -21,6 +21,9 @@ class Settings(BaseModel):
     sender_name: Optional[str] = Field(None, alias="SENDER_NAME")
     sendpulse_smtp_port: Optional[str] = Field(None, alias="SENDPULSE_SMTP_PORT")
     meta_pixel_id: Optional[str] = Field(None, alias="META_PIXEL_ID")
+    shop_admin_email: Optional[str] = Field(None, alias="SHOP_ADMIN_EMAIL")
+    shop_admin_password: Optional[str] = Field(None, alias="SHOP_ADMIN_PASSWORD")
+    shop_jwt_secret: Optional[str] = Field(None, alias="SHOP_JWT_SECRET")
 
     @field_validator("opencage_api_key", "openrouter_api_key", mode="before")
     @classmethod

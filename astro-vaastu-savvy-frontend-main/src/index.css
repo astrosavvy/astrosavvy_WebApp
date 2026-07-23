@@ -1,0 +1,152 @@
+@import "tailwindcss";
+body {
+  background-color: #F5EBE0; /* Soft Parchment Cream */
+  color: #1B2624;           /* Stone Charcoal */
+  font-family: 'Poppins', sans-serif;
+}
+.highlight {
+  position: relative;
+  color: #112e29;
+}
+
+.highlight::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 8px;
+  width: 100%;
+  height: 8px;
+  background: #c47a2c; /* warm gold */
+  opacity: 0.25;
+  z-index: -1;
+  border-radius: 4px;
+}
+
+
+
+/* 3D card base */
+.perspective {
+  perspective: 1200px;
+}
+
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease, box-shadow 0.6s ease;
+}
+
+.card-3d:hover {
+  transform: rotateX(6deg) rotateY(-6deg) translateY(-8px);
+}
+
+/* Floating hearts — BIG & VISIBLE */
+@keyframes floatHeart {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-120vh) scale(1.7); opacity: 0; }
+}
+.animate-floatHeart {
+  animation: floatHeart linear infinite;
+}
+
+/* Discount divine pulse */
+@keyframes divinePulse {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 rgba(255,215,0,0);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(255,215,0,0.8);
+  }
+}
+.discount-pulse {
+  background: #5D101D;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  animation: divinePulse 1.4s infinite;
+}
+
+/* Section headings */
+.section-heading {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #5D101D;
+  margin-bottom: 12px;
+}
+
+/* Carousel nav */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.85);
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-in-out;
+}
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

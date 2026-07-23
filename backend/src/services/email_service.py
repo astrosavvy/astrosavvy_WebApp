@@ -53,6 +53,23 @@ class EmailService:
             print(f"[EmailService] Error sending email: {e}")
             return False
 
+    def send_otp_email(self, to_email: str, customer_name: str, otp_code: str) -> bool:
+        """Sends 6-digit OTP code for shop login."""
+        subject = f"🔑 {otp_code} is your Astro Savvy verification code"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+            <h2 style="color: #7c3aed; text-align: center;">Astro Savvy Login</h2>
+            <p>Hi <strong>{customer_name}</strong>,</p>
+            <p>Your one-time verification code is:</p>
+            <div style="background: #f3e8ff; color: #6b21a8; font-size: 28px; font-weight: bold; letter-spacing: 6px; text-align: center; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                {otp_code}
+            </div>
+            <p style="color: #666; font-size: 13px;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
+        </div>
+        """
+        return self._send_email(to_email, subject, html)
+
+
     def send_order_confirmation(self, to_email: str, customer_name: str, order_id: str) -> bool:
         """Sends the immediate 24-36 hour delivery confirmation email."""
         subject = f"✨ Preparing Your Cosmic Love Report — Order #{order_id}"
