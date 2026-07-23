@@ -15,3 +15,8 @@ extracted_data/
 fonts/
 backend/fonts/
 Login_Credentials.txt
+.agents/
+rules.md
+skill.md
+skills.md
+skills-lock.json
