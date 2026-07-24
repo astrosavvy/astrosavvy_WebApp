@@ -706,7 +706,7 @@ async def generate_report_background_task(order_id: str, provider: str, model: s
 # --- Public E-Commerce APIs ---
 
 @app.get("/api/geocode")
-def api_geocode(q: str):
+async def api_geocode(q: str):
     """Search locations using OpenCage API directly for sub-second autocomplete latency, with caching."""
     if not q or not q.strip():
         return {"results": []}
@@ -725,9 +725,9 @@ def api_geocode(q: str):
         geocode_mem_cache[query_key] = cached_data
         return {"results": cached_data}
         
-    # 3. Query OpenCage API using pre-initialized client
+    # 3. Query OpenCage API asynchronously using thread pool with timeout
     try:
-        results = geocoder_client.geocode(q, no_annotations=0, limit=5)
+        results = await asyncio.to_thread(geocoder_client.geocode, q, no_annotations=0, limit=5, timeout=4)
         if not results:
             return {"results": []}
             
