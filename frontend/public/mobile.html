@@ -272,6 +272,7 @@
         }
 
         .form-group {
+            position: relative;
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -951,9 +952,9 @@
         birthplaceInput.addEventListener("input", function() {
             selectedPlace = null; // Reset selection on input change
             const query = this.value.trim();
-            if (query.length < 3) {
+            if (query.length < 2) {
                 autocompleteList.classList.remove("show");
-                setTimeout(() => { autocompleteList.style.display = "none"; }, 300);
+                autocompleteList.style.display = "none";
                 return;
             }
 
@@ -964,40 +965,43 @@
                     const data = await response.json();
                     
                     if (data.results && data.results.length > 0) {
-                        renderAutocomplete(data.results);
-                    } else {
-                        autocompleteList.innerHTML = `<div class="autocomplete-item">No location found</div>`;
+                        autocompleteList.innerHTML = "";
+                        data.results.forEach(res => {
+                            const div = document.createElement("div");
+                            div.className = "autocomplete-item";
+                            div.style.cursor = "pointer";
+                            div.style.padding = "10px 14px";
+                            div.style.borderBottom = "1px solid #F0F0F0";
+                            div.innerText = res.formatted;
+                            
+                            // Use mousedown & stopPropagation to prevent premature click-outside closes
+                            div.addEventListener("mousedown", (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                birthplaceInput.value = res.formatted;
+                                selectedPlace = res;
+                                autocompleteList.classList.remove("show");
+                                autocompleteList.style.display = "none";
+                                showError("");
+                            });
+                            autocompleteList.appendChild(div);
+                        });
                         autocompleteList.style.display = "block";
-                        setTimeout(() => { autocompleteList.classList.add("show"); }, 10);
+                        autocompleteList.classList.add("show");
+                    } else {
+                        autocompleteList.classList.remove("show");
+                        autocompleteList.style.display = "none";
                     }
-                } catch(e) {
-                    console.error("Geocoding failed", e);
+                } catch (e) {
+                    console.error("Geocoding failed:", e);
                 }
-            }, 300);
+            }, 150);
         });
 
-        function renderAutocomplete(results) {
-            autocompleteList.innerHTML = "";
-            results.forEach(res => {
-                const item = document.createElement("div");
-                item.className = "autocomplete-item";
-                item.innerText = res.formatted;
-                item.addEventListener("click", () => {
-                    selectedPlace = res;
-                    birthplaceInput.value = res.formatted;
-                    autocompleteList.classList.remove("show");
-                    setTimeout(() => { autocompleteList.style.display = "none"; }, 300);
-                });
-                autocompleteList.appendChild(item);
-            });
-            autocompleteList.style.display = "block";
-            setTimeout(() => { autocompleteList.classList.add("show"); }, 10);
-        }
-
         document.addEventListener("click", (e) => {
-            if (e.target !== birthplaceInput) {
+            if (e.target !== birthplaceInput && !autocompleteList.contains(e.target)) {
                 autocompleteList.classList.remove("show");
-                setTimeout(() => { autocompleteList.style.display = "none"; }, 300);
+                autocompleteList.style.display = "none";
             }
         });
 
