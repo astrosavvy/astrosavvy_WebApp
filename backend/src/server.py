@@ -285,22 +285,28 @@ def api_health():
 
 # --- Admin Authentication Dependency ---
 async def get_current_admin(
-    authorization: Optional[str] = Header(None),
-    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+    authorization: Any = Header(None),
+    x_admin_token: Any = Header(None, alias="X-Admin-Token"),
     token: Optional[str] = None
 ):
+    # Safely unwrap FastAPI Header objects if passed directly
+    if hasattr(authorization, "default"):
+        authorization = None
+    if hasattr(x_admin_token, "default"):
+        x_admin_token = None
+
     auth_token = None
-    if authorization:
+    if isinstance(authorization, str) and authorization:
         if authorization.startswith("Bearer "):
             auth_token = authorization.split(" ")[1]
         else:
             auth_token = authorization
-    elif x_admin_token:
+    elif isinstance(x_admin_token, str) and x_admin_token:
         auth_token = x_admin_token
-    elif token:
+    elif isinstance(token, str) and token:
         auth_token = token
         
-    if not auth_token or auth_token.strip().lower() in ["none", "null", "undefined"]:
+    if not auth_token or not isinstance(auth_token, str) or auth_token.strip().lower() in ["none", "null", "undefined"]:
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
     
     # 1. Try Supabase admin token
