@@ -10,16 +10,28 @@ const ReportOrders = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("adminToken");
+  const getAuthHeaders = () => {
+    const currentToken = localStorage.getItem("adminToken");
+    return {
+      Authorization: `Bearer ${currentToken}`,
+      "X-Admin-Token": currentToken,
+    };
+  };
 
   const fetchReportOrders = async () => {
+    const currentToken = localStorage.getItem("adminToken");
+    if (!currentToken) {
+      navigate("/admin/login");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL || ""}/api/admin/orders`,
+        `${import.meta.env.VITE_API_URL || "https://api.astrosavvysingh.com"}/api/admin/orders`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: getAuthHeaders(),
         }
       );
       setOrders(res.data.orders || res.data.data || []);
@@ -32,8 +44,9 @@ const ReportOrders = () => {
   };
 
   useEffect(() => {
-    if (!token) {
-      navigate("/admin-login");
+    const currentToken = localStorage.getItem("adminToken");
+    if (!currentToken) {
+      navigate("/admin/login");
       return;
     }
     fetchReportOrders();
@@ -43,9 +56,9 @@ const ReportOrders = () => {
     if (!window.confirm("Trigger report generation for this order now?")) return;
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL || ""}/api/admin/orders/${orderId}/generate`,
+        `${import.meta.env.VITE_API_URL || "https://api.astrosavvysingh.com"}/api/admin/orders/${orderId}/generate`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: getAuthHeaders() }
       );
       alert("Report generation triggered!");
       fetchReportOrders();

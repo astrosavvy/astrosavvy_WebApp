@@ -284,21 +284,35 @@ def api_health():
 
 
 # --- Admin Authentication Dependency ---
-async def get_current_admin(authorization: Optional[str] = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
+async def get_current_admin(
+    authorization: Optional[str] = Header(None),
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+    token: Optional[str] = None
+):
+    auth_token = None
+    if authorization:
+        if authorization.startswith("Bearer "):
+            auth_token = authorization.split(" ")[1]
+        else:
+            auth_token = authorization
+    elif x_admin_token:
+        auth_token = x_admin_token
+    elif token:
+        auth_token = token
+        
+    if not auth_token or auth_token.strip().lower() in ["none", "null", "undefined"]:
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-    token = authorization.split(" ")[1]
     
     # 1. Try Supabase admin token
     supabase_service = SupabaseService()
-    user = supabase_service.verify_admin_token(token)
+    user = supabase_service.verify_admin_token(auth_token)
     
     # 2. Fallback to ShopAuthService JWT token (used by unified admin portal)
     if not user:
         try:
             from src.services.shop_auth_service import ShopAuthService
             shop_auth = ShopAuthService()
-            user = shop_auth.verify_token(token)
+            user = shop_auth.verify_token(auth_token)
         except Exception as e:
             print(f"[AdminAuth] ShopAuth token check error: {e}")
             user = None
