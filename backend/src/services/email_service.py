@@ -61,6 +61,9 @@ class EmailService:
 
             print(f"[EmailService] Error sending email to {to_email}: All SMTP ports timed out/failed.")
             return False
+        except Exception as e:
+            print(f"[EmailService] Unexpected error sending email to {to_email}: {e}")
+            return False
 
     def send_otp_email(self, to_email: str, customer_name: str, otp_code: str) -> bool:
         """Sends 6-digit OTP code for shop login."""
