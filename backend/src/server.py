@@ -122,18 +122,8 @@ geocoder_client = OpenCageGeocode(opencage_key_val)
 # Configure CORS for Cloudflare Pages, local, and custom production domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://love.astrosavvysingh.com",
-        "https://astrosavvysingh.com",
-        "https://www.astrosavvysingh.com",
-        "https://astrosavvy-webapp.pages.dev",
-        "https://astrosavvy-shop.pages.dev",
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:8000"
-    ],
-    allow_origin_regex=r"https://.*\.pages\.dev",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
