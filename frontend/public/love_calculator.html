@@ -753,78 +753,109 @@
         }
 
         function downloadShareCard() {
-            const data = window.lastShareData || { name1: "Soulmate 1", name2: "Soulmate 2", score: 88 };
+            const data = window.lastShareData || { name1: "Soulmate 1", name2: "Soulmate 2", score: 95 };
             
             const canvas = document.createElement("canvas");
             canvas.width = 600;
             canvas.height = 600;
             const ctx = canvas.getContext("2d");
 
-            // Cosmic Blush Gradient Background
-            const grad = ctx.createLinearGradient(0, 0, 600, 600);
-            grad.addColorStop(0, "#FDF0F2");
-            grad.addColorStop(0.5, "#F7D6DF");
-            grad.addColorStop(1, "#E89FBA");
-            ctx.fillStyle = grad;
+            // 1. Vibrant Dark Neon Gen Z Gradient Background
+            const bgGrad = ctx.createLinearGradient(0, 0, 600, 600);
+            bgGrad.addColorStop(0, "#1F0419");
+            bgGrad.addColorStop(0.5, "#3D0C2E");
+            bgGrad.addColorStop(1, "#5E0E3D");
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, 600, 600);
 
-            // Gold Decorative Inner Border
-            ctx.strokeStyle = "#D4698A";
+            // Floating neon stars / stardust effect
+            const stars = [
+                [80, 80, 4], [520, 90, 3], [70, 500, 5], [530, 480, 4], [300, 40, 3], [120, 300, 3], [480, 320, 4]
+            ];
+            ctx.fillStyle = "#FF70A6";
+            stars.forEach(([x, y, r]) => {
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+
+            // 2. Neon Border Frame
+            ctx.strokeStyle = "rgba(255, 112, 166, 0.4)";
             ctx.lineWidth = 4;
-            ctx.strokeRect(20, 20, 560, 560);
-            ctx.strokeStyle = "rgba(158, 58, 94, 0.3)";
-            ctx.lineWidth = 1;
+            ctx.strokeRect(18, 18, 564, 564);
+
+            // Inner Accent Frame
+            ctx.strokeStyle = "rgba(255, 154, 162, 0.2)";
+            ctx.lineWidth = 1.5;
             ctx.strokeRect(26, 26, 548, 548);
 
-            // Brand Title
-            ctx.fillStyle = "#3A2030";
-            ctx.font = "bold 26px Georgia, serif";
+            // 3. Header: ASTRO VAASTU SAVVY Brand (Bold Gen Z style)
+            ctx.fillStyle = "#FF70A6";
+            ctx.font = "bold 22px sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText("ASTRO VAASTU SAVVY", 300, 75);
+            ctx.fillText("✨ ASTRO VAASTU SAVVY ✨", 300, 70);
 
-            ctx.fillStyle = "#9E3A5E";
-            ctx.font = "italic 18px Georgia, serif";
-            ctx.fillText("Chaldean Numerology Love Calculator", 300, 105);
+            // 4. Names Pill Badge (Funky Pill Container)
+            const nameText = `${data.name1}  💖  ${data.name2}`;
+            ctx.font = "bold 26px serif";
+            const nameWidth = Math.min(ctx.measureText(nameText).width + 50, 520);
 
-            // Names
-            ctx.fillStyle = "#C4284D";
-            ctx.font = "bold 26px Georgia, serif";
-            ctx.fillText(`${data.name1}  ❤️  ${data.name2}`, 300, 175);
-
-            // Score Circle Shadow & Fill
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+            ctx.strokeStyle = "#FF70A6";
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(300, 300, 85, 0, 2 * Math.PI);
-            ctx.fillStyle = "#FFFFFF";
-            ctx.shadowColor = "rgba(212, 105, 138, 0.4)";
-            ctx.shadowBlur = 20;
+            if (ctx.roundRect) {
+                ctx.roundRect(300 - nameWidth / 2, 115, nameWidth, 55, 28);
+            } else {
+                ctx.rect(300 - nameWidth / 2, 115, nameWidth, 55);
+            }
             ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = "#D4698A";
+            ctx.stroke();
+
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillText(nameText, 300, 152);
+
+            // 5. Giant Glowing Score Circle
+            ctx.save();
+            ctx.shadowColor = "#FF2E93";
+            ctx.shadowBlur = 35;
+            
+            ctx.beginPath();
+            ctx.arc(300, 290, 85, 0, 2 * Math.PI);
+            const circleGrad = ctx.createLinearGradient(215, 205, 385, 375);
+            circleGrad.addColorStop(0, "#FF416C");
+            circleGrad.addColorStop(1, "#FF4B2B");
+            ctx.fillStyle = circleGrad;
+            ctx.fill();
+            ctx.restore();
+
+            ctx.strokeStyle = "#FFFFFF";
             ctx.lineWidth = 4;
             ctx.stroke();
 
-            // Score Percentage Value
-            ctx.fillStyle = "#C4284D";
-            ctx.font = "bold 56px sans-serif";
-            ctx.fillText(`${data.score}%`, 300, 318);
+            // Score Number
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "900 60px sans-serif";
+            ctx.fillText(`${data.score}%`, 300, 310);
 
-            // Tagline text
-            ctx.fillStyle = "#3A2030";
-            ctx.font = "italic 20px Georgia, serif";
-            ctx.fillText("Our Astrological Love Score!", 300, 425);
+            // 6. Bold Funky Tagline
+            ctx.fillStyle = "#FFD166";
+            ctx.font = "bold 24px serif";
+            ctx.fillText("🔥 Our Astrological Love Match! 🔥", 300, 425);
 
-            ctx.fillStyle = "#9E3A5E";
-            ctx.font = "16px sans-serif";
-            ctx.fillText("Find out your love score at:", 300, 475);
+            // 7. Subtle, Less Highlighted Bottom Footer Link (De-emphasized)
+            ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+            ctx.font = "12px sans-serif";
+            ctx.fillText("Find out your love score at", 300, 525);
 
-            ctx.fillStyle = "#C4284D";
-            ctx.font = "bold 18px sans-serif";
-            ctx.fillText("love.astrosavvysingh.com/love-calculator", 300, 505);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+            ctx.font = "13px sans-serif";
+            ctx.fillText("love.astrosavvysingh.com/love-calculator", 300, 545);
 
             // Trigger Image Download
             const dataUrl = canvas.toDataURL("image/png");
             const link = document.createElement("a");
-            link.download = `Love-Score-${data.name1}-${data.name2}.png`;
+            link.download = `Love-Match-${data.name1}-${data.name2}.png`;
             link.href = dataUrl;
             link.click();
         }
