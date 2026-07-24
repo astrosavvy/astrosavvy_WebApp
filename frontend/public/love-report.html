@@ -38,7 +38,8 @@
 
     <!-- Client-side mobile redirect & proactive backend pre-warming -->
     <script>
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        // Redirect to /mobile only if we are not already on a mobile route
+        if (!window.location.pathname.includes("/mobile") && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             window.location.replace("/mobile");
         }
         fetch(`${API_BASE_URL}/api/config`).catch(() => {});
