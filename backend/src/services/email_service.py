@@ -37,20 +37,29 @@ class EmailService:
             html_part = MIMEText(html_content, "html", "utf-8")
             msg.attach(html_part)
             
-            # port 465 requires SSL, port 587 requires STARTTLS
-            if self.smtp_port == 465:
-                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
-                    server.login(self.smtp_user, self.smtp_pass)
-                    server.sendmail(self.sender_email, to_email, msg.as_string())
-            else:
-                with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
-                    server.starttls()
-                    server.login(self.smtp_user, self.smtp_pass)
-                    server.sendmail(self.sender_email, to_email, msg.as_string())
-            print(f"[EmailService] Email sent successfully to {to_email}")
-            return True
-        except Exception as e:
-            print(f"[EmailService] Error sending email: {e}")
+            # Try configured port first, then fallback ports (587, 2525, 465) with 10s timeout
+            ports_to_try = [self.smtp_port]
+            for fallback_port in [587, 2525, 465]:
+                if fallback_port not in ports_to_try:
+                    ports_to_try.append(fallback_port)
+
+            for port in ports_to_try:
+                try:
+                    if port == 465:
+                        with smtplib.SMTP_SSL(self.smtp_host, port, timeout=10) as server:
+                            server.login(self.smtp_user, self.smtp_pass)
+                            server.sendmail(self.sender_email, to_email, msg.as_string())
+                    else:
+                        with smtplib.SMTP(self.smtp_host, port, timeout=10) as server:
+                            server.starttls()
+                            server.login(self.smtp_user, self.smtp_pass)
+                            server.sendmail(self.sender_email, to_email, msg.as_string())
+                    print(f"[EmailService] Email sent successfully to {to_email} via port {port}")
+                    return True
+                except Exception as e:
+                    print(f"[EmailService] Port {port} attempt failed: {e}")
+
+            print(f"[EmailService] Error sending email to {to_email}: All SMTP ports timed out/failed.")
             return False
 
     def send_otp_email(self, to_email: str, customer_name: str, otp_code: str) -> bool:

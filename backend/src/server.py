@@ -181,7 +181,7 @@ static_dir = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "frontend")
 )
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def get_root_page():
     return {
         "name": "Astro Savvy Unified API Server",
@@ -282,7 +282,7 @@ def get_public_config():
     }
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def api_health():
     """System health check endpoint verifying database connectivity and configuration status."""
     supabase = SupabaseService()
