@@ -284,35 +284,36 @@ def api_health():
 
 
 # --- Admin Authentication Dependency ---
-async def get_current_admin(
-    authorization: Any = Header(None),
-    x_admin_token: Any = Header(None, alias="X-Admin-Token"),
-    token: Optional[str] = None
-):
-    # Safely unwrap FastAPI Header objects if passed directly
-    if hasattr(authorization, "default"):
-        authorization = None
-    if hasattr(x_admin_token, "default"):
-        x_admin_token = None
+async def get_current_admin(request: Any):
+    auth_header = None
+    if isinstance(request, Request):
+        auth_header = (
+            request.headers.get("Authorization")
+            or request.headers.get("authorization")
+            or request.headers.get("X-Admin-Token")
+            or request.headers.get("x-admin-token")
+            or request.query_params.get("token")
+        )
+    elif isinstance(request, str):
+        auth_header = request
+    elif hasattr(request, "headers"):
+        try:
+            auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
+        except Exception:
+            pass
 
-    auth_token = None
-    if isinstance(authorization, str) and authorization:
-        if authorization.startswith("Bearer "):
-            auth_token = authorization.split(" ")[1]
-        else:
-            auth_token = authorization
-    elif isinstance(x_admin_token, str) and x_admin_token:
-        auth_token = x_admin_token
-    elif isinstance(token, str) and token:
-        auth_token = token
-        
-    if not auth_token or not isinstance(auth_token, str) or auth_token.strip().lower() in ["none", "null", "undefined"]:
+    if not auth_header or not isinstance(auth_header, str):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-    
+
+    auth_token = auth_header.replace("Bearer ", "").strip() if "Bearer " in auth_header else auth_header.strip()
+
+    if not auth_token or auth_token.lower() in ["none", "null", "undefined"]:
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
     # 1. Try Supabase admin token
     supabase_service = SupabaseService()
     user = supabase_service.verify_admin_token(auth_token)
-    
+
     # 2. Fallback to ShopAuthService JWT token (used by unified admin portal)
     if not user:
         try:
@@ -1020,8 +1021,8 @@ def get_admin_role(user: Dict[str, Any]) -> str:
 
 
 @app.get("/api/admin/orders")
-async def api_admin_orders(status: Optional[str] = None, search: Optional[str] = None, archived: bool = False, admin: Any = Header(None)):
-    user = await get_current_admin(admin)
+async def api_admin_orders(request: Request, status: Optional[str] = None, search: Optional[str] = None, archived: bool = False):
+    user = await get_current_admin(request)
     role = get_admin_role(user)
     
     supabase = SupabaseService()
