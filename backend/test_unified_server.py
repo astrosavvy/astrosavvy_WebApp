@@ -49,8 +49,12 @@ def test_routes():
     # 7. Admin Get Paid Kundlis
     r = client.get("/api/shop/kundli/paid", headers={"Authorization": f"Bearer {token}"})
     print(f"GET /api/shop/kundli/paid -> {r.status_code}: count={len(r.json().get('data', []))}")
+    # 8. Create Payment Order
+    r = client.post("/api/shop/payment/create-order", json={"amount": 499.00})
+    print(f"POST /api/shop/payment/create-order -> {r.status_code}: order_id={r.json().get('order', {}).get('id')}")
     assert r.status_code == 200
-    
+    assert r.json().get("success") is True
+
     print("\n✅ ALL BACKEND TEST PASS SUCCESSFULLY!")
 
 if __name__ == "__main__":

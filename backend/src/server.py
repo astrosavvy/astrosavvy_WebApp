@@ -1715,9 +1715,11 @@ async def api_shop_create_order(req: Request):
         raise HTTPException(status_code=400, detail="Valid amount is required")
     payment_srv = PaymentService()
     try:
-        rz_order = payment_srv.create_razorpay_order(amount, currency="INR", receipt=f"shop_{int(time.time())}")
+        receipt_val = f"shop_{int(time.time())}"
+        rz_order = payment_srv.create_razorpay_order(float(amount), receipt_id=receipt_val)
         return {"success": True, "order": rz_order}
     except Exception as e:
+        print(f"[ERROR] Shop Create Order Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create order: {e}")
 
 @app.post("/api/shop/payment/verify")
