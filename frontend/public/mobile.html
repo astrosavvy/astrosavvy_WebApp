@@ -33,12 +33,26 @@
     <script>
         window.API_BASE_URL = window.location.hostname.includes("localhost") ? "http://127.0.0.1:8000" : "https://api.astrosavvysingh.com";
         var API_BASE_URL = window.API_BASE_URL;
+    
+
+        // Resilient safeFetch helper with auto-retry for server cold-start warmup
+        async function safeFetch(url, options = {}, retries = 2) {
+            for (let i = 0; i <= retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res) return res;
+                } catch (err) {
+                    if (i === retries) throw err;
+                    await new Promise(r => setTimeout(r, 800 * (i + 1)));
+                }
+            }
+        }
     </script>
     <title>Cosmic Love Report — Astro Vaastu Savvy</title>
 
     <!-- Proactive backend pre-warming -->
     <script>
-        fetch(`${API_BASE_URL}/api/config`).catch(() => {});
+        safeFetch(`${API_BASE_URL}/api/config`).catch(() => {});
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
@@ -966,7 +980,7 @@
             clearTimeout(autocompleteTimeout);
             autocompleteTimeout = setTimeout(async () => {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/geocode?q=${encodeURIComponent(query)}`);
+                    const response = await safeFetch(`${API_BASE_URL}/api/geocode?q=${encodeURIComponent(query)}`);
                     const data = await response.json();
                     console.log("[Geocode Query]", query, "Results count:", data.results ? data.results.length : 0);
                     
@@ -1095,7 +1109,7 @@
                     geocoded_place: selectedPlace.raw
                 };
 
-                const res = await fetch(`${API_BASE_URL}/api/orders/create`, {
+                const res = await safeFetch(`${API_BASE_URL}/api/orders/create`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -1123,7 +1137,7 @@
                                 razorpay_signature: payment.razorpay_signature
                             };
 
-                            const verifyRes = await fetch(`${API_BASE_URL}/api/payments/verify`, {
+                            const verifyRes = await safeFetch(`${API_BASE_URL}/api/payments/verify`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify(verifyPayload)
