@@ -81,7 +81,7 @@ function ProductPayment() {
         .join(", ");
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY || "rzp_live_S6uqRxVnmhfTmE",
         amount: data.order.amount,
         currency: "INR",
         name: "Astro Vaastu Savvy",
