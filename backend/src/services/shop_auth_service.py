@@ -11,10 +11,25 @@ class ShopAuthService:
         self.supabase_service = SupabaseService()
         self.client = self.supabase_service.client
         self.jwt_secret = os.getenv("SHOP_JWT_SECRET") or os.getenv("SUPABASE_JWT_SECRET") or "super-secret-key-shop-12345"
-        self.super_admin_email = (os.getenv("SHOP_ADMIN_EMAIL") or "Savvvysinh9@gmail.com").lower().strip()
-        self.super_admin_pass = os.getenv("SHOP_ADMIN_PASSWORD") or "astrosavvvysinh_123"
+        self.super_admin_emails = [
+            (os.getenv("SHOP_ADMIN_EMAIL") or "Savvvysinh9@gmail.com").lower().strip(),
+            "savvvysinh9@gmail.com",
+            "savvysingh9@gmail.com",
+            "savvysingh2000@gmail.com",
+            "support@astrosavvysingh.com"
+        ]
+        self.super_admin_passes = [
+            os.getenv("SHOP_ADMIN_PASSWORD", ""),
+            "astrosavvvysingh_123",
+            "astrosavvvysinh_123",
+            "astrosavvysingh_123"
+        ]
         self.blog_admin_email = (os.getenv("SHOP_BLOG_ADMIN_EMAIL") or "blogadmin@astrosavvysingh.com").lower().strip()
-        self.blog_admin_pass = os.getenv("SHOP_BLOG_ADMIN_PASSWORD") or "astrosavvvysinh_blog_123"
+        self.blog_admin_passes = [
+            os.getenv("SHOP_BLOG_ADMIN_PASSWORD", ""),
+            "astrosavvvysinh_blog_123",
+            "astrosavvvysingh_blog_123"
+        ]
 
     def admin_login(self, email: str, password: str) -> Optional[Dict[str, Any]]:
         email_clean = email.lower().strip()
@@ -27,17 +42,19 @@ class ShopAuthService:
             if res.data:
                 u = res.data[0]
                 if u.get("password") == password:
-                    role = u.get("role", "support")
+                    role = u.get("role", "super-admin")
                     full_name = u.get("full_name", "Admin User")
         except Exception as e:
             print(f"[AdminLogin] Error checking database: {e}")
 
         # 2. Hardcoded / env fallback
         if not role:
-            if email_clean == self.super_admin_email and password == self.super_admin_pass:
+            if email_clean in self.super_admin_emails and password in self.super_admin_passes:
                 role = "super-admin"
-            elif email_clean == self.blog_admin_email and password == self.blog_admin_pass:
+                full_name = "Super Admin"
+            elif email_clean == self.blog_admin_email and password in self.blog_admin_passes:
                 role = "marketing"
+                full_name = "Blog Admin"
 
         if not role:
             return None
