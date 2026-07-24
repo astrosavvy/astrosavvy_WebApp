@@ -949,6 +949,7 @@
 
         // Autocomplete Search logic
         birthplaceInput.addEventListener("input", function() {
+            selectedPlace = null; // Reset selection on input change
             const query = this.value.trim();
             if (query.length < 3) {
                 autocompleteList.classList.remove("show");
@@ -1059,23 +1060,12 @@
             showLoading(true);
 
             try {
-                // Ensure selectedPlace is geocoded on-the-fly if user typed manually
-                const placeQuery = birthplaceInput.value.trim();
-                if (!selectedPlace || (selectedPlace.formatted && !placeQuery.toLowerCase().includes(selectedPlace.formatted.split(',')[0].toLowerCase()))) {
-                    if (!placeQuery) {
-                        showLoading(false);
-                        showError("Please enter a valid birth city.");
-                        return;
-                    }
-                    const geoRes = await fetch(`${API_BASE_URL}/api/geocode?q=${encodeURIComponent(placeQuery)}`);
-                    const geoData = await geoRes.json();
-                    if (geoData.results && geoData.results.length > 0) {
-                        selectedPlace = geoData.results[0];
-                    } else {
-                        showLoading(false);
-                        showError("Could not geocode the entered city. Please select a valid city from the autocomplete list.");
-                        return;
-                    }
+                // Strict Astrological City Selection Check
+                if (!selectedPlace || birthplaceInput.value.trim() !== selectedPlace.formatted) {
+                    showLoading(false);
+                    showError("Please select your exact birth city from the dropdown list to ensure accurate planetary calculations.");
+                    birthplaceInput.focus();
+                    return;
                 }
                 const payload = {
                     name: document.getElementById("name").value,
