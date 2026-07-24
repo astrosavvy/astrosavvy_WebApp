@@ -1,5 +1,2 @@
-# Cloudflare Pages Clean URLs handle static HTML files automatically (.html extension is stripped).
-# Only add custom redirects if target HTML file name differs from path segment.
-/love-calculator        /love_calculator.html    200
-/report-admin/login     /report-admin-login.html 200
-/report-admin/signup    /report-admin-signup.html 200
+# React SPA Fallback Route for Cloudflare Pages / Workers
+/*    /index.html   200
