@@ -2004,7 +2004,8 @@ async def render_keep_alive_loop():
     while True:
         try:
             await asyncio.sleep(600) # Ping every 10 minutes
-            url = "http://127.0.0.1:8000/api/health"
+            port = os.getenv("PORT", "8000")
+            url = f"http://127.0.0.1:{port}/api/health"
             req = urllib.request.Request(url, headers={"User-Agent": "RenderKeepAlive/1.0"})
             with urllib.request.urlopen(req, timeout=10) as response:
                 pass
