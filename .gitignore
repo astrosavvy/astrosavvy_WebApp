@@ -9,12 +9,11 @@ venv/
 .gemini/
 node_modules/
 backend/node_modules/
-astro-vaastu-savvy-frontend-main/node_modules/
-astro-vaastu-savvy-frontend-main/dist/
+frontend/node_modules/
+frontend/dist/
 extracted_data/
 fonts/
 backend/fonts/
-Login_Credentials.txt
 .agents/
 rules.md
 skill.md
