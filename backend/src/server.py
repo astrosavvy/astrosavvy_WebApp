@@ -107,6 +107,8 @@ def get_rudraksha_remedy(gender: str, moon_sign: str, sun_sign: str) -> str:
     else:
         return sun_map.get(s_sign, "5 mukhi Rudraksha (Nepali) - https://www.astrosavvysingh.com/product/5-mukhi-rudraksha-nepali")
 
+import traceback
+
 app = FastAPI(title="🔮 Cosmic Report Compiler & E-Commerce Server")
 
 # Global Caches for Geocoding Autocomplete
@@ -117,7 +119,6 @@ geocode_mem_cache = {}
 opencage_key_val = os.getenv("OPENCAGE_API_KEY", "3723e0d7ceb64eb3bd3623477d4c3142")
 geocoder_client = OpenCageGeocode(opencage_key_val)
 
-
 # Configure CORS for Vercel / Cloudflare local and production domains
 app.add_middleware(
     CORSMiddleware,
@@ -126,6 +127,44 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- ENHANCED LOGGING MIDDLEWARE & EXCEPTION HANDLERS ---
+@app.middleware("http")
+async def log_requests_middleware(request: Request, call_next):
+    start_time = time.time()
+    method = request.method
+    url = str(request.url)
+    client_ip = request.client.host if request.client else "unknown"
+    
+    try:
+        response = await call_next(request)
+        process_time = (time.time() - start_time) * 1000
+        print(f"[API HTTP] {method} {url} | Status: {response.status_code} | Duration: {process_time:.2f}ms | Client: {client_ip}")
+        return response
+    except Exception as exc:
+        process_time = (time.time() - start_time) * 1000
+        print(f"[API ERROR] {method} {url} | Client: {client_ip} | Duration: {process_time:.2f}ms | Error: {exc}")
+        print(f"[API TRACEBACK]\n{traceback.format_exc()}")
+        raise exc
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    print(f"[API HTTP EXCEPTION {exc.status_code}] {request.method} {request.url} -> Detail: {exc.detail}")
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail, "status": exc.status_code})
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    error_msg = f"[API UNHANDLED EXCEPTION 500] {request.method} {request.url}: {exc}"
+    print(error_msg)
+    print(f"[API TRACEBACK]\n{traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": f"Internal Server Error: {str(exc)}",
+            "error_type": type(exc).__name__,
+            "path": str(request.url)
+        }
+    )
 
 # 1. Mount Static Files
 static_dir = os.path.abspath(
