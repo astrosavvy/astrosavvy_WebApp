@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Registration — Cosmic Astrological Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FDF0F2; /* Blush-tinted cream background */
+            --card-bg: #FFFFFF; /* Pure white card */
+            --primary: #D4698A; /* Deeper dusty rose */
+            --primary-dark: #9E3A5E; /* Dark magenta-plum */
+            --accent: #C4284D; /* Bold crimson-pink */
+            --text-dark: #3A2030; /* Dark plum-brown */
+            --text-muted: #9A7E8A; /* Muted mauve-taupe */
+            --border-color: rgba(212, 105, 138, 0.25);
+            --shadow: 0 30px 60px rgba(180, 80, 120, 0.08);
+            --transition-fluid: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: 'Lora', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient stardust particles in the background */
+        .stars-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .star-particle {
+            position: absolute;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.15;
+            animation: floatParticle 25s infinite linear;
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.25; }
+            90% { opacity: 0.25; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        .container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .container::after {
+            content: '';
+            position: absolute;
+            top: 6px; left: 6px; right: 6px; bottom: 6px;
+            border: 1px solid rgba(212, 105, 138, 0.08);
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.3rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-family: 'Jost', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .divider {
+            width: 50px;
+            height: 1px;
+            background: var(--primary);
+            margin: 15px auto 0;
+            opacity: 0.5;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .form-group::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%; width: 0; height: 1.5px;
+            background: var(--accent);
+            transition: var(--transition-fluid);
+        }
+
+        .form-group:focus-within::after {
+            left: 0;
+            width: 100%;
+        }
+
+        .form-group:focus-within label {
+            color: var(--accent);
+        }
+
+        label {
+            font-family: 'Jost', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: var(--transition-fluid);
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            border-bottom: 1.5px solid var(--border-color);
+            border-radius: 0;
+            padding: 10px 0;
+            color: var(--text-dark);
+            font-family: 'Lora', serif;
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition-fluid);
+        }
+
+        input:focus {
+            border-bottom-color: transparent;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #D4698A 0%, #B84570 100%);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 30px; /* Pill */
+            padding: 16px 45px;
+            font-family: 'Jost', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            cursor: pointer;
+            transition: var(--transition-fluid);
+            box-shadow: 0 4px 18px rgba(212, 105, 138, 0.25);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(212, 105, 138, 0.35);
+        }
+
+        .submit-btn:disabled {
+            background: #D8CEC6;
+            color: #9E928A;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.08);
+            border-left: 3px solid #DC3545;
+            color: #C0392B;
+            padding: 12px 18px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(40, 167, 69, 0.08);
+            border-left: 3px solid #28A745;
+            color: #1E7E34;
+            padding: 12px 18px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            font-family: 'Jost', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .login-link a {
+            color: var(--primary-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition-fluid);
+        }
+
+        .login-link a:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating stardust particles -->
+    <div class="stars-container" id="starsContainer"></div>
+
+    <div class="container">
+        <header>
+            <h1>Admin Panel</h1>
+            <p>Request Astrological Credentials</p>
+            <div class="divider"></div>
+        </header>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" required placeholder="e.g. Acharya Savvy Singh">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Admin Email</label>
+                <input type="email" id="email" required placeholder="e.g. support@astrosavvysingh.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="••••••••" minlength="8">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" required placeholder="••••••••" minlength="8">
+            </div>
+
+            <button type="submit" class="submit-btn" id="signupBtn">🔒 Register Account</button>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="/admin/login">Login here</a>
+        </div>
+    </div>
+
+    <script>
+        // Generate floating stardust particles dynamically
+        const starsContainer = document.getElementById("starsContainer");
+        for (let i = 0; i < 8; i++) {
+            const star = document.createElement("div");
+            star.className = "star-particle";
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.width = `${Math.random() * 3 + 2}px`;
+            star.style.height = star.style.width;
+            star.style.animationDelay = `${Math.random() * 10}s`;
+            star.style.animationDuration = `${Math.random() * 10 + 15}s`;
+            starsContainer.appendChild(star);
+        }
+
+        document.getElementById("signupForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const fullName = document.getElementById("fullName").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            
+            const errBanner = document.getElementById("errorMessage");
+            const succBanner = document.getElementById("successMessage");
+            const btn = document.getElementById("signupBtn");
+
+            errBanner.style.display = "none";
+            succBanner.style.display = "none";
+
+            if (password !== confirmPassword) {
+                errBanner.innerText = "Passwords do not match.";
+                errBanner.style.display = "block";
+                return;
+            }
+
+            btn.disabled = true;
+
+            try {
+                const res = await fetch("/api/admin/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ full_name: fullName, email, password })
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.detail || "Registration failed.");
+                }
+
+                succBanner.innerText = "Registration request submitted. An administrator must approve your account before you can log in.";
+                succBanner.style.display = "block";
+                document.getElementById("signupForm").reset();
+            } catch(err) {
+                errBanner.innerText = err.message;
+                errBanner.style.display = "block";
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
