@@ -1,118 +1,196 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../utils/axios";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import axios from "axios";
+import TiptapEditor from "../../components/TiptapEditor";
 
 function CreateBlog() {
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
+  const [coverImage, setCoverImage] = useState("");
   const [isPublished, setIsPublished] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  const generateSlug = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
+
+  const handleTitleChange = (e) => {
+    const val = e.target.value;
+    setTitle(val);
+    if (!slug) {
+      setSlug(generateSlug(val));
+    }
+  };
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingCover(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const API_URL = import.meta.env.VITE_API_URL || "https://api.astrosavvysingh.com";
+      const token = localStorage.getItem("adminToken");
+
+      const res = await axios.post(`${API_URL}/api/admin/blogs/upload-image`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.data?.url) {
+        setCoverImage(res.data.url);
+      }
+    } catch (err) {
+      console.error("Cover upload failed:", err);
+      alert("Cover image upload failed.");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
 
     try {
       setLoading(true);
 
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("excerpt", excerpt);
-      formData.append("content", content);
-      formData.append("isPublished", isPublished);
+      const API_URL = import.meta.env.VITE_API_URL || "https://api.astrosavvysingh.com";
+      const token = localStorage.getItem("adminToken");
 
-      await api.post("/api/shop/blogs", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      await axios.post(
+        `${API_URL}/api/shop/blogs`,
+        {
+          title,
+          slug: slug || generateSlug(title),
+          excerpt,
+          content,
+          coverImage,
+          isPublished,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       alert("Blog created successfully!");
       navigate("/admin/blogs");
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Failed to create blog");
+      alert(error.response?.data?.detail || error.response?.data?.message || "Failed to create blog");
     } finally {
       setLoading(false);
     }
   };
 
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      ["clean"],
-    ],
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "list",
-    "bullet",
-    "link",
-  ];
-
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Create Blog</h2>
+    <div className="p-8 max-w-4xl mx-auto bg-gray-50 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-gray-800">Create New Blog</h2>
+        <button
+          onClick={() => navigate("/admin/blogs")}
+          className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition"
+        >
+          ← Back to Blogs
+        </button>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Blog Title"
-          className="w-full border p-3 rounded"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-
-        <textarea
-          placeholder="Brief Excerpt"
-          className="w-full border p-3 rounded"
-          rows="2"
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-        />
-
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl shadow border border-gray-200">
         <div>
-          <label className="block mb-2 font-medium">Blog Content</label>
-          <ReactQuill
-            theme="snow"
-            value={content}
-            onChange={setContent}
-            className="bg-white mb-4"
-            modules={modules}
-            formats={formats}
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Blog Title</label>
+          <input
+            type="text"
+            placeholder="Enter Blog Title..."
+            className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            value={title}
+            onChange={handleTitleChange}
+            required
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">URL Slug</label>
+          <input
+            type="text"
+            placeholder="url-friendly-slug"
+            className="w-full border border-gray-300 p-3 rounded-lg text-sm font-mono text-gray-600 bg-gray-50 focus:outline-none"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Cover Image Banner</label>
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Cover Image URL or upload file →"
+              className="flex-1 border border-gray-300 p-3 rounded-lg text-sm"
+              value={coverImage}
+              onChange={(e) => setCoverImage(e.target.value)}
+            />
+            <label className="cursor-pointer bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold px-4 py-3 rounded-lg text-sm transition">
+              {uploadingCover ? "Uploading..." : "Upload Banner"}
+              <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+            </label>
+          </div>
+          {coverImage && (
+            <img src={coverImage} alt="Cover preview" className="mt-3 h-40 w-full object-cover rounded-lg border" />
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Brief Excerpt / Summary</label>
+          <textarea
+            placeholder="Write a 1-2 sentence summary of this blog for preview cards..."
+            className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
+            rows="2"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Blog Content (Tiptap Rich-Text Editor)</label>
+          <TiptapEditor content={content} onChange={setContent} placeholder="Write your full blog post here..." />
+        </div>
+
+        <div className="flex items-center gap-2 pt-2">
           <input
             type="checkbox"
             id="publish"
             checked={isPublished}
             onChange={() => setIsPublished(!isPublished)}
+            className="w-4 h-4 text-purple-600 rounded"
           />
-          <label htmlFor="publish">Publish Blog</label>
+          <label htmlFor="publish" className="text-sm font-medium text-gray-700">Publish immediately to website</label>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`bg-black text-white px-6 py-3 rounded w-full md:w-auto transition ${
-            loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-800"
+          className={`w-full py-3 rounded-lg text-white font-semibold transition ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-700 hover:bg-purple-800 shadow-md"
           }`}
         >
-          {loading ? "Creating..." : "Create Blog"}
+          {loading ? "Saving Blog..." : "Publish Blog"}
         </button>
       </form>
     </div>

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import uuid
 import json
 import asyncio
 from datetime import datetime, timedelta, timezone
@@ -37,7 +38,7 @@ def calculate_delivery_time_ist(order_time_utc: datetime) -> datetime:
                 
     return current_ist.astimezone(timezone.utc)
 
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Header, Response
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Header, Response, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -1937,6 +1938,24 @@ async def api_get_blog_by_id_or_slug(identifier: str):
     if not blog:
         raise HTTPException(status_code=404, detail="Blog not found")
     return {"success": True, "blog": blog}
+
+@app.post("/api/admin/blogs/upload-image")
+async def api_upload_blog_image(file: UploadFile = File(...)):
+    """Uploads an inline or cover image to Supabase Storage bucket 'blog-images' and returns public URL."""
+    try:
+        contents = await file.read()
+        ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+        unique_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}.{ext}"
+        
+        supabase = SupabaseService()
+        public_url = supabase.upload_blog_image(unique_name, contents, content_type=file.content_type or "image/jpeg")
+        if not public_url:
+            raise HTTPException(status_code=500, detail="Failed to upload image to Supabase Storage")
+            
+        return {"success": True, "url": public_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/shop/blogs")
 async def api_create_blog(req: Request, authorization: Optional[str] = Header(None)):

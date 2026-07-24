@@ -427,6 +427,34 @@ class SupabaseService:
         return res.data or []
 
     # --- Supabase Storage PDF Upload & Cleanup ---
+    def upload_blog_image(self, filename: str, image_bytes: bytes, content_type: str = "image/jpeg") -> Optional[str]:
+        """Uploads a blog image to Supabase 'blog-images' storage bucket. Returns public URL."""
+        if not self.is_configured():
+            return None
+        
+        bucket_name = "blog-images"
+        try:
+            self.client.storage.from_(bucket_name).upload(
+                path=filename,
+                file=image_bytes,
+                file_options={"content-type": content_type, "x-upsert": "true"}
+            )
+            public_url = self.client.storage.from_(bucket_name).get_public_url(filename)
+            return public_url
+        except Exception as e:
+            print(f"[SupabaseStorage] Error uploading to 'blog-images': {e}")
+            try:
+                fallback_filename = f"blog_{filename}"
+                self.client.storage.from_("reports").upload(
+                    path=fallback_filename,
+                    file=image_bytes,
+                    file_options={"content-type": content_type, "x-upsert": "true"}
+                )
+                return self.client.storage.from_("reports").get_public_url(fallback_filename)
+            except Exception as e2:
+                print(f"[SupabaseStorage] Fallback image upload failed: {e2}")
+                return None
+
     def upload_pdf_report(self, order_id: str, local_pdf_path: str) -> Optional[str]:
         """Uploads a PDF file to Supabase 'reports' storage bucket. Returns public URL."""
         if not self.is_configured():
