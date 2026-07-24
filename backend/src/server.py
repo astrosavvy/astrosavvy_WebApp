@@ -810,7 +810,7 @@ async def api_create_order(payload: Dict[str, Any]):
             "razorpay_order_id": rz_order["id"],
             "amount": rz_order["amount"],
             "currency": "INR",
-            "razorpay_key_id": os.getenv("RAZORPAY_KEY_ID", "")
+            "razorpay_key_id": os.getenv("RAZORPAY_KEY_ID") or "rzp_live_T9L3iqBPRPz1i5"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
