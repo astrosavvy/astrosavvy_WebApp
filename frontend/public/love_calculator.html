@@ -503,6 +503,24 @@
                     <p id="phraseText">"The stars are assembling your destiny..."</p>
                 </div>
                 
+                <!-- SOCIAL SHARE SECTION -->
+                <div style="margin-top: 25px; padding: 20px; background: rgba(212, 105, 138, 0.06); border-radius: 12px; border: 1px dashed var(--primary);">
+                    <p style="font-family: 'Jost', sans-serif; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--primary-dark); margin-bottom: 12px;">
+                        💖 Share Your Love Score
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" onclick="shareWhatsApp()" style="background: #25D366; color: white; border: none; border-radius: 25px; padding: 10px 20px; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);">
+                            🟢 Share on WhatsApp
+                        </button>
+                        <button type="button" onclick="shareTwitter()" style="background: #1DA1F2; color: white; border: none; border-radius: 25px; padding: 10px 20px; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(29, 161, 242, 0.3);">
+                            🐦 Share on X (Twitter)
+                        </button>
+                        <button type="button" onclick="downloadShareCard()" style="background: linear-gradient(135deg, #833AB4, #FD1D1D, #FCB045); color: white; border: none; border-radius: 25px; padding: 10px 20px; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(225, 48, 108, 0.3);">
+                            📸 Download Image Card
+                        </button>
+                    </div>
+                </div>
+
                 <div style="margin-top: 30px; padding-top: 25px; border-top: 1.5px solid var(--border-color); text-align: center;">
                     <p style="font-family: 'Lora', Georgia, serif; font-size: 1rem; color: var(--text-dark); line-height: 1.6; margin-bottom: 20px;">
                         Get personalised remedies for a harmonised love relationship.
@@ -712,7 +730,103 @@
 
                 // Render phrase
                 phraseText.innerText = `"${phrase}"`;
+                
+                // Save data for sharing
+                window.lastShareData = { name1, name2, score };
             }, 50);
+        }
+
+        // --- SOCIAL SHARE HANDLERS ---
+        function getShareText() {
+            const data = window.lastShareData || { name1: "Me", name2: "My Partner", score: 88 };
+            return `I found out our Love Score is ${data.score}% with ${data.name1} & ${data.name2}! 💖 Find out yours at https://love.astrosavvysingh.com/love-calculator ✨`;
+        }
+
+        function shareWhatsApp() {
+            const text = getShareText();
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function shareTwitter() {
+            const text = getShareText();
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function downloadShareCard() {
+            const data = window.lastShareData || { name1: "Soulmate 1", name2: "Soulmate 2", score: 88 };
+            
+            const canvas = document.createElement("canvas");
+            canvas.width = 600;
+            canvas.height = 600;
+            const ctx = canvas.getContext("2d");
+
+            // Cosmic Blush Gradient Background
+            const grad = ctx.createLinearGradient(0, 0, 600, 600);
+            grad.addColorStop(0, "#FDF0F2");
+            grad.addColorStop(0.5, "#F7D6DF");
+            grad.addColorStop(1, "#E89FBA");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 600, 600);
+
+            // Gold Decorative Inner Border
+            ctx.strokeStyle = "#D4698A";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(20, 20, 560, 560);
+            ctx.strokeStyle = "rgba(158, 58, 94, 0.3)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(26, 26, 548, 548);
+
+            // Brand Title
+            ctx.fillStyle = "#3A2030";
+            ctx.font = "bold 26px Georgia, serif";
+            ctx.textAlign = "center";
+            ctx.fillText("ASTRO VAASTU SAVVY", 300, 75);
+
+            ctx.fillStyle = "#9E3A5E";
+            ctx.font = "italic 18px Georgia, serif";
+            ctx.fillText("Chaldean Numerology Love Calculator", 300, 105);
+
+            // Names
+            ctx.fillStyle = "#C4284D";
+            ctx.font = "bold 26px Georgia, serif";
+            ctx.fillText(`${data.name1}  ❤️  ${data.name2}`, 300, 175);
+
+            // Score Circle Shadow & Fill
+            ctx.beginPath();
+            ctx.arc(300, 300, 85, 0, 2 * Math.PI);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.shadowColor = "rgba(212, 105, 138, 0.4)";
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = "#D4698A";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Score Percentage Value
+            ctx.fillStyle = "#C4284D";
+            ctx.font = "bold 56px sans-serif";
+            ctx.fillText(`${data.score}%`, 300, 318);
+
+            // Tagline text
+            ctx.fillStyle = "#3A2030";
+            ctx.font = "italic 20px Georgia, serif";
+            ctx.fillText("Our Astrological Love Score!", 300, 425);
+
+            ctx.fillStyle = "#9E3A5E";
+            ctx.font = "16px sans-serif";
+            ctx.fillText("Find out your love score at:", 300, 475);
+
+            ctx.fillStyle = "#C4284D";
+            ctx.font = "bold 18px sans-serif";
+            ctx.fillText("love.astrosavvysingh.com/love-calculator", 300, 505);
+
+            // Trigger Image Download
+            const dataUrl = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.download = `Love-Score-${data.name1}-${data.name2}.png`;
+            link.href = dataUrl;
+            link.click();
         }
     </script>
 </body>
