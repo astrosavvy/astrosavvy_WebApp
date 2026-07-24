@@ -31,7 +31,7 @@ const AdminLogin = () => {
 
       // ✅ Save BOTH JWT token and Role
       localStorage.setItem("adminToken", res.data.token);
-      localStorage.setItem("adminRole", res.data.role); // 🔥 Stored for UI logic
+      localStorage.setItem("adminRole", res.data.role);
 
       navigate("/admin");
     } catch (error) {
@@ -41,11 +41,6 @@ const AdminLogin = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillCredentials = (roleEmail, rolePass) => {
-    setEmail(roleEmail);
-    setPassword(rolePass);
   };
 
   return (
@@ -92,41 +87,6 @@ const AdminLogin = () => {
         >
           {loading ? "Logging in..." : "Login to Admin Portal"}
         </button>
-
-        {/* --- Quick Credentials Selector --- */}
-        <div className="mt-8 border-t border-gray-200 pt-6">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 text-center">
-            Role Credentials (Click to autofill)
-          </h3>
-
-          <div className="space-y-3">
-            {/* Super Admin */}
-            <div
-              onClick={() => fillCredentials("Savvvysinh9@gmail.com", "astrosavvvysingh_123")}
-              className="cursor-pointer p-3 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 transition text-left"
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-purple-800">👑 Super Admin</span>
-                <span className="text-[10px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded font-medium">Full Access</span>
-              </div>
-              <p className="text-[11px] text-gray-600 font-mono">Email: Savvvysinh9@gmail.com</p>
-              <p className="text-[11px] text-gray-600 font-mono">Password: astrosavvvysingh_123</p>
-            </div>
-
-            {/* Marketing / Blog Admin */}
-            <div
-              onClick={() => fillCredentials("blogadmin@astrosavvysingh.com", "astrosavvvysinh_blog_123")}
-              className="cursor-pointer p-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition text-left"
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-green-800">✍️ Blog &amp; Marketing Admin</span>
-                <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded font-medium">Blogs Only</span>
-              </div>
-              <p className="text-[11px] text-gray-600 font-mono">Email: blogadmin@astrosavvysingh.com</p>
-              <p className="text-[11px] text-gray-600 font-mono">Password: astrosavvvysinh_blog_123</p>
-            </div>
-          </div>
-        </div>
       </form>
     </div>
   );
