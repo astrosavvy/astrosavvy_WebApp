@@ -1,7 +1,6 @@
 vedastro
 google-genai
 openai
-playwright
 pydantic
 requests
 opencage

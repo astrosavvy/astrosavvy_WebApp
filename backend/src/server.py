@@ -1693,6 +1693,8 @@ async def api_cron_send_reports():
 
 async def local_scheduled_worker_loop():
     """Local worker loop that periodically checks database for due reports."""
+    print("[LocalWorker] Background scheduler waiting 15s for web server startup...")
+    await asyncio.sleep(15) # Wait 15s so Uvicorn port binding completes instantly
     print("[LocalWorker] Background scheduler started.")
     while True:
         try:
@@ -1999,6 +2001,7 @@ async def api_shop_admin_login(req: Request):
 
 async def render_keep_alive_loop():
     """Background task to self-ping server every 10 minutes so Render free tier never sleeps."""
+    await asyncio.sleep(30) # Wait 30s after server boot
     print("[KeepAlive] Continuous ping worker loop started.")
     import urllib.request
     while True:
