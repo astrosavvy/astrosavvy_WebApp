@@ -14,3 +14,4 @@ fastapi
 uvicorn
 sse-starlette
 PyMuPDF
+python-multipart
