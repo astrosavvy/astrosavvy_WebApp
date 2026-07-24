@@ -1,18 +1,10 @@
-# Cloudflare Pages Redirects & Rewrites
-
-# API Proxy to Render FastAPI backend
-/api/*  https://api.astrosavvysingh.com/api/:splat  200
-
-# Report Engine Static Page Rewrites
-/love-report  /love-report.html  200
-/love-report/  /love-report.html  200
-/love-report/mobile  /mobile.html  200
-/love-report/success  /success.html  200
-/love-calculator  /love_calculator.html  200
-/testbed  /testbed.html  200
-/report-admin  /report-admin.html  200
-/report-admin/login  /report-admin-login.html  200
-/report-admin/signup  /report-admin-signup.html  200
-
-# React SPA Fallback
-/*  /index.html  200
+# Cloudflare Pages Rewrites for Static Report Engine Pages
+/love-report          /love-report.html        200
+/love-report/         /love-report.html        200
+/love-report/mobile   /mobile.html             200
+/love-report/success  /success.html            200
+/love-calculator      /love_calculator.html    200
+/testbed              /testbed.html            200
+/report-admin         /report-admin.html       200
+/report-admin/login   /report-admin-login.html 200
+/report-admin/signup  /report-admin-signup.html 200
