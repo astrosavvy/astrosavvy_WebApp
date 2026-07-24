@@ -47,21 +47,27 @@ class EmailService:
                 msg["To"] = to_email
                 msg.attach(MIMEText(html_content, "html", "utf-8"))
 
+                # Try active_sender first, then fallback to authenticated self.smtp_user as envelope sender
+                envelope_senders = [active_sender]
+                if self.smtp_user and self.smtp_user not in envelope_senders:
+                    envelope_senders.append(self.smtp_user)
+
                 for port in ports_to_try:
-                    try:
-                        if port == 465:
-                            with smtplib.SMTP_SSL(self.smtp_host, port, timeout=10) as server:
-                                server.login(self.smtp_user, self.smtp_pass)
-                                server.sendmail(active_sender, to_email, msg.as_string())
-                        else:
-                            with smtplib.SMTP(self.smtp_host, port, timeout=10) as server:
-                                server.starttls()
-                                server.login(self.smtp_user, self.smtp_pass)
-                                server.sendmail(active_sender, to_email, msg.as_string())
-                        print(f"[EmailService] Email sent successfully to {to_email} via port {port} (sender: {active_sender})")
-                        return True
-                    except Exception as e:
-                        print(f"[EmailService] Port {port} (sender: {active_sender}) attempt failed: {e}")
+                    for env_sender in envelope_senders:
+                        try:
+                            if port == 465:
+                                with smtplib.SMTP_SSL(self.smtp_host, port, timeout=10) as server:
+                                    server.login(self.smtp_user, self.smtp_pass)
+                                    server.sendmail(env_sender, to_email, msg.as_string())
+                            else:
+                                with smtplib.SMTP(self.smtp_host, port, timeout=10) as server:
+                                    server.starttls()
+                                    server.login(self.smtp_user, self.smtp_pass)
+                                    server.sendmail(env_sender, to_email, msg.as_string())
+                            print(f"[EmailService] Email sent successfully to {to_email} via port {port} (env sender: {env_sender})")
+                            return True
+                        except Exception as e:
+                            print(f"[EmailService] Port {port} (env sender: {env_sender}) attempt failed: {e}")
 
             print(f"[EmailService] Error sending email to {to_email}: All SMTP ports/senders failed.")
             return False
