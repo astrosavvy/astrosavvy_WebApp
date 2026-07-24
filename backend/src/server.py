@@ -133,12 +133,13 @@ static_dir = os.path.abspath(
 )
 
 @app.get("/")
-def get_root_page(request: Request):
-    user_agent = request.headers.get("user-agent", "").lower()
-    is_mobile = any(x in user_agent for x in ["iphone", "android", "blackberry", "opera mini", "mobile"])
-    if is_mobile:
-        return FileResponse(os.path.join(static_dir, "mobile.html"))
-    return FileResponse(os.path.join(static_dir, "order.html"))
+def get_root_page():
+    return {
+        "name": "Astro Savvy Unified API Server",
+        "status": "online",
+        "health": "/api/health",
+        "docs": "/docs"
+    }
 
 @app.get("/order")
 def get_order_page(request: Request):
