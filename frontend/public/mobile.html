@@ -33,7 +33,7 @@
 
     <!-- Proactive backend pre-warming -->
     <script>
-        fetch('/api/config').catch(() => {});
+        fetch(`${API_BASE_URL}/api/config').catch(() => {});
     </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
@@ -959,7 +959,7 @@
             clearTimeout(autocompleteTimeout);
             autocompleteTimeout = setTimeout(async () => {
                 try {
-                    const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+                    const response = await fetch(`${API_BASE_URL}/api/geocode?q=${encodeURIComponent(query)}`);
                     const data = await response.json();
                     
                     if (data.results && data.results.length > 0) {
@@ -1078,7 +1078,7 @@
                     geocoded_place: selectedPlace.raw
                 };
 
-                const res = await fetch("/api/orders/create", {
+                const res = await fetch(`${API_BASE_URL}/api/orders/create", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -1106,7 +1106,7 @@
                                 razorpay_signature: payment.razorpay_signature
                             };
 
-                            const verifyRes = await fetch("/api/payments/verify", {
+                            const verifyRes = await fetch(`${API_BASE_URL}/api/payments/verify", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify(verifyPayload)

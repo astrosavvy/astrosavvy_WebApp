@@ -1,8 +1,11 @@
 # Cloudflare Pages Rewrites for Static Report Engine Pages
+/mobile               /mobile.html             200
+/mobile/              /mobile.html             200
 /love-report          /love-report.html        200
 /love-report/         /love-report.html        200
 /love-report/mobile   /mobile.html             200
 /love-report/success  /success.html            200
+/success              /success.html            200
 /love-calculator      /love_calculator.html    200
 /testbed              /testbed.html            200
 /report-admin         /report-admin.html       200
