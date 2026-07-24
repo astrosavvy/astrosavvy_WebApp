@@ -12,7 +12,7 @@ class EmailService:
         # Support both SENDPULSE_SMTP_PASSWORD and SENDPULSE_SMTP_PASS naming conventions
         self.smtp_pass = os.getenv("SENDPULSE_SMTP_PASSWORD") or os.getenv("SENDPULSE_SMTP_PASS")
         # Support SENDER_EMAIL and SENDPULSE_SENDER naming conventions
-        self.sender_email = os.getenv("SENDER_EMAIL") or os.getenv("SENDPULSE_SENDER") or "support@astrosavvysingh.com"
+        self.sender_email = os.getenv("SENDER_EMAIL") or os.getenv("SENDPULSE_SENDER") or self.smtp_user or "support@astrosavvysingh.com"
         self.sender_name = os.getenv("SENDER_NAME", "AstroSavvy Order")
 
     def is_configured(self) -> bool:
@@ -29,37 +29,41 @@ class EmailService:
             return True
 
         try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"{self.sender_name} <{self.sender_email}>"
-            msg["To"] = to_email
-            
-            html_part = MIMEText(html_content, "html", "utf-8")
-            msg.attach(html_part)
-            
-            # Try configured port first, then fallback ports (587, 2525, 465) with 10s timeout
+            # Try configured port first, then fallback ports (2525, 587, 465) with 10s timeout
             ports_to_try = [self.smtp_port]
-            for fallback_port in [587, 2525, 465]:
+            for fallback_port in [2525, 587, 465]:
                 if fallback_port not in ports_to_try:
                     ports_to_try.append(fallback_port)
 
-            for port in ports_to_try:
-                try:
-                    if port == 465:
-                        with smtplib.SMTP_SSL(self.smtp_host, port, timeout=10) as server:
-                            server.login(self.smtp_user, self.smtp_pass)
-                            server.sendmail(self.sender_email, to_email, msg.as_string())
-                    else:
-                        with smtplib.SMTP(self.smtp_host, port, timeout=10) as server:
-                            server.starttls()
-                            server.login(self.smtp_user, self.smtp_pass)
-                            server.sendmail(self.sender_email, to_email, msg.as_string())
-                    print(f"[EmailService] Email sent successfully to {to_email} via port {port}")
-                    return True
-                except Exception as e:
-                    print(f"[EmailService] Port {port} attempt failed: {e}")
+            # Try custom sender first, then fallback to verified smtp_user login email if 554 error occurs
+            senders_to_try = [self.sender_email]
+            if self.smtp_user and self.smtp_user not in senders_to_try:
+                senders_to_try.append(self.smtp_user)
 
-            print(f"[EmailService] Error sending email to {to_email}: All SMTP ports timed out/failed.")
+            for active_sender in senders_to_try:
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = f"{self.sender_name} <{active_sender}>"
+                msg["To"] = to_email
+                msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+                for port in ports_to_try:
+                    try:
+                        if port == 465:
+                            with smtplib.SMTP_SSL(self.smtp_host, port, timeout=10) as server:
+                                server.login(self.smtp_user, self.smtp_pass)
+                                server.sendmail(active_sender, to_email, msg.as_string())
+                        else:
+                            with smtplib.SMTP(self.smtp_host, port, timeout=10) as server:
+                                server.starttls()
+                                server.login(self.smtp_user, self.smtp_pass)
+                                server.sendmail(active_sender, to_email, msg.as_string())
+                        print(f"[EmailService] Email sent successfully to {to_email} via port {port} (sender: {active_sender})")
+                        return True
+                    except Exception as e:
+                        print(f"[EmailService] Port {port} (sender: {active_sender}) attempt failed: {e}")
+
+            print(f"[EmailService] Error sending email to {to_email}: All SMTP ports/senders failed.")
             return False
         except Exception as e:
             print(f"[EmailService] Unexpected error sending email to {to_email}: {e}")
