@@ -114,4 +114,23 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 6. Disable Row Level Security (RLS) & Grant Public Policies for Backend API Access
+ALTER TABLE IF EXISTS public.customers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.orders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.email_logs DISABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public insert on customers" ON public.customers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select on customers" ON public.customers FOR SELECT USING (true);
+CREATE POLICY "Allow public update on customers" ON public.customers FOR UPDATE USING (true);
+
+CREATE POLICY "Allow public insert on orders" ON public.orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select on orders" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Allow public update on orders" ON public.orders FOR UPDATE USING (true);
+
+CREATE POLICY "Allow public insert on payments" ON public.payments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select on payments" ON public.payments FOR SELECT USING (true);
+CREATE POLICY "Allow public update on payments" ON public.payments FOR UPDATE USING (true);
+
+
 
