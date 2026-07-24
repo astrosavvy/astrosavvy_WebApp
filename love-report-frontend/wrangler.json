@@ -1,0 +1,8 @@
+{
+  "name": "love-report-engine",
+  "compatibility_date": "2024-09-23",
+  "main": "love_worker.js",
+  "assets": {
+    "directory": "."
+  }
+}
