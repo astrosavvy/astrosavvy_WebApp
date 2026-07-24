@@ -68,33 +68,37 @@ function AdminBlogs() {
           </thead>
 
           <tbody>
-            {blogs.map((blog) => (
-              <tr key={blog._id} className="hover:bg-gray-50">
-                <td className="p-3 border font-medium">{blog.title}</td>
-                <td className="p-3 border text-center">
-                  <span className={`px-2 py-1 rounded text-sm ${blog.isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {blog.isPublished ? "Published" : "Draft"}
-                  </span>
-                </td>
-                <td className="p-3 border">
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => navigate(`/admin/edit-blog/${blog._id}`)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition"
-                    >
-                      Edit
-                    </button>
+            {blogs.map((blog) => {
+              const blogId = blog.id || blog._id;
+              const isPub = blog.is_published ?? blog.isPublished ?? true;
+              return (
+                <tr key={blogId || Math.random()} className="hover:bg-gray-50">
+                  <td className="p-3 border font-medium">{blog.title}</td>
+                  <td className="p-3 border text-center">
+                    <span className={`px-2 py-1 rounded text-sm ${isPub ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      {isPub ? "Published" : "Draft"}
+                    </span>
+                  </td>
+                  <td className="p-3 border">
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => navigate(`/admin/edit-blog/${blogId}`)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition"
+                      >
+                        Edit
+                      </button>
 
-                    <button
-                      onClick={() => handleDelete(blog._id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      <button
+                        onClick={() => handleDelete(blogId)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
 
             {blogs.length === 0 && (
               <tr>

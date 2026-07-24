@@ -38,5 +38,9 @@ class BlogService:
         return res.data[0] if res.data else {}
 
     def delete_blog(self, blog_id: str) -> bool:
-        self.client.table("blogs").delete().eq("id", blog_id).execute()
-        return True
+        try:
+            self.client.table("blogs").delete().eq("id", blog_id).execute()
+            return True
+        except Exception as e:
+            print(f"[BlogService] Error deleting blog '{blog_id}': {e}")
+            return False

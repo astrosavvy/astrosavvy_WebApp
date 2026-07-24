@@ -1987,6 +1987,8 @@ async def api_update_blog(blog_id: str, req: Request, authorization: Optional[st
 
 @app.delete("/api/shop/blogs/{blog_id}")
 async def api_delete_blog(blog_id: str, authorization: Optional[str] = Header(None)):
+    if not blog_id or blog_id.strip().lower() in ["undefined", "null", "none"]:
+        raise HTTPException(status_code=400, detail="Invalid blog ID")
     blog_service.delete_blog(blog_id)
     return {"success": True, "message": "Blog deleted successfully"}
 
