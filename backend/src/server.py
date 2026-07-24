@@ -238,12 +238,12 @@ def get_savvy_singh_jpg():
     return FileResponse(os.path.join(static_dir, "savvy_singh.jpg"))
 
 @app.get("/favicon.png")
-def get_favicon_png():
-    return FileResponse(os.path.join(static_dir, "favicon.png"))
-
 @app.get("/favicon.ico")
-def get_favicon_ico():
-    return FileResponse(os.path.join(static_dir, "favicon.ico"))
+def get_favicon():
+    fav_path = os.path.join(static_dir, "favicon.png")
+    if os.path.exists(fav_path):
+        return FileResponse(fav_path)
+    return Response(status_code=204)
 
 
 
