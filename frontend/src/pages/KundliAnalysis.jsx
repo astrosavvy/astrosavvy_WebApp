@@ -59,7 +59,7 @@ console.log("RAZORPAY KEY:", import.meta.env.VITE_RAZORPAY_KEY);
 const kundliPayload = { ...formData };
       // 2️⃣ RAZORPAY OPTIONS
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY || "rzp_live_S6uqRxVnmhfTmE",
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY || "rzp_live_T9L3iqBPRPz1i5",
         amount: order.amount,
         currency: "INR",
         name: "Astro Vaastu Savvy",
