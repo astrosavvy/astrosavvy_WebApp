@@ -29,6 +29,11 @@
     <!-- End Meta Pixel Code -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- API Base URL Definition -->
+    <script>
+        window.API_BASE_URL = window.location.hostname.includes("localhost") ? "http://127.0.0.1:8000" : "https://api.astrosavvysingh.com";
+        var API_BASE_URL = window.API_BASE_URL;
+    </script>
     <title>Cosmic Love & Marriage Report — Astro Vaastu Savvy</title>
 
     <!-- Client-side mobile redirect & proactive backend pre-warming -->
