@@ -1928,6 +1928,9 @@ async def api_get_blogs_admin(authorization: Optional[str] = Header(None)):
 
 @app.get("/api/shop/blogs/{identifier}")
 async def api_get_blog_by_id_or_slug(identifier: str):
+    if not identifier or identifier.strip().lower() in ["undefined", "null", "none"]:
+        raise HTTPException(status_code=404, detail="Invalid blog identifier")
+        
     blog = blog_service.get_blog_by_slug(identifier)
     if not blog:
         blog = blog_service.get_blog_by_id(identifier)

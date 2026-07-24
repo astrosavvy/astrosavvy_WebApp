@@ -21,9 +21,12 @@ class BlogService:
         return None
 
     def get_blog_by_id(self, blog_id: str) -> Optional[Dict[str, Any]]:
-        res = self.client.table("blogs").select("*").eq("id", blog_id).execute()
-        if res.data:
-            return res.data[0]
+        try:
+            res = self.client.table("blogs").select("*").eq("id", blog_id).execute()
+            if res.data:
+                return res.data[0]
+        except Exception as e:
+            print(f"[BlogService] Error fetching blog by id '{blog_id}': {e}")
         return None
 
     def create_blog(self, data: Dict[str, Any]) -> Dict[str, Any]:
