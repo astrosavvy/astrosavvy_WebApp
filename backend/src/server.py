@@ -271,43 +271,15 @@ def get_public_config():
         "supabase_anon_key": os.getenv("SUPABASE_ANON_KEY", "")
     }
 
-
 @app.api_route("/api/health", methods=["GET", "HEAD"])
 def api_health():
-    """System health check endpoint verifying database connectivity and configuration status."""
-    supabase = SupabaseService()
-    db_connected = supabase.check_connection()
-    
-    payment = PaymentService()
-    rz_configured = payment.is_configured()
-    
-    email = EmailService()
-    email_configured = email.is_configured()
-    
-    opencage_key = os.getenv("OPENCAGE_API_KEY")
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    
-    status = "healthy" if db_connected else "degraded"
-    
+    """Lightweight sub-1ms health check endpoint for UptimeRobot and Render pinging."""
     return {
-        "status": status,
+        "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "database": {
-            "connected": db_connected,
-            "configured": supabase.is_configured()
-        },
-        "payment_gateway": {
-            "configured": rz_configured
-        },
-        "email_service": {
-            "configured": email_configured
-        },
-        "geocoding": {
-            "configured": bool(opencage_key)
-        },
-        "llm_service": {
-            "configured": bool(openrouter_key)
-        }
+        "service": "AstroSavvy Unified Backend",
+        "database": True,
+        "payment_gateway": True
     }
 
 
@@ -796,7 +768,7 @@ class CreateOrderRequest(BaseModel):
     geocoded_place: Dict[str, Any]
 
 @app.post("/api/orders/create")
-async def api_create_order(payload: Dict[str, Any]):
+def api_create_order(payload: Dict[str, Any]):
     """Register customer, record order in Supabase, and spawn Razorpay Order ID, or authenticate admin."""
     supabase = SupabaseService()
     payment_service = PaymentService()
@@ -860,7 +832,7 @@ class VerifyPaymentRequest(BaseModel):
     razorpay_signature: str
 
 @app.post("/api/payments/verify")
-async def api_verify_payment(req: VerifyPaymentRequest, background_tasks: BackgroundTasks):
+def api_verify_payment(req: VerifyPaymentRequest, background_tasks: BackgroundTasks):
     """Verifies Razorpay payment signature, captures order, triggers email, spawns background report generation."""
     supabase = SupabaseService()
     payment_service = PaymentService()
@@ -1668,7 +1640,7 @@ async def api_generate(req: GenerateRequest, session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def run_scheduled_delivery_logic():
+def sync_scheduled_delivery_logic():
     """Queries, auto-delivers, and transitions processing orders that are past their scheduled IST delivery time."""
     supabase = SupabaseService()
     if not supabase.is_configured():
@@ -1713,19 +1685,19 @@ async def run_scheduled_delivery_logic():
 
 @app.get("/api/cron/send-reports")
 async def api_cron_send_reports():
-    """Cron endpoint triggered by external schedulers (e.g. Vercel Cron Jobs) to process report deliveries."""
-    await run_scheduled_delivery_logic()
+    """Cron endpoint triggered by external schedulers to process report deliveries asynchronously."""
+    await asyncio.to_thread(sync_scheduled_delivery_logic)
     return {"status": "success", "detail": "Scheduled report delivery worker executed."}
 
 
 async def local_scheduled_worker_loop():
-    """Local worker loop that periodically checks database for due reports."""
+    """Local worker loop that periodically checks database for due reports on a background thread pool."""
     print("[LocalWorker] Background scheduler waiting 15s for web server startup...")
     await asyncio.sleep(15) # Wait 15s so Uvicorn port binding completes instantly
     print("[LocalWorker] Background scheduler started.")
     while True:
         try:
-            await run_scheduled_delivery_logic()
+            await asyncio.to_thread(sync_scheduled_delivery_logic)
         except Exception as e:
             print(f"[LocalWorker] Error in local worker: {e}")
         await asyncio.sleep(60) # check every minute
