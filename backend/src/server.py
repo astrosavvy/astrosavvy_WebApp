@@ -697,10 +697,7 @@ async def generate_report_background_task(order_id: str, provider: str, model: s
 
 @app.get("/api/geocode")
 async def api_geocode(q: str):
-    """
-    Search locations using Google Places API (with fallback to OpenCage)
-    for sub-50ms personalized city autocomplete with caching.
-    """
+    """Search locations using LocationIQ Autocomplete / OpenCage with sub-50ms latency and caching."""
     if not q or not q.strip():
         return {"results": []}
         
@@ -717,52 +714,45 @@ async def api_geocode(q: str):
     if cached_data is not None:
         geocode_mem_cache[query_key] = cached_data
         return {"results": cached_data}
-
-    google_api_key = os.getenv("GOOGLE_PLACES_API_KEY") or os.getenv("GOOGLE_MAPS_API_KEY")
-
-    # 3. Query Google Places API if configured
-    if google_api_key:
+        
+    locationiq_key = os.getenv("LOCATIONIQ_API_KEY")
+    
+    # 3. Primary: LocationIQ Autocomplete API (Sub-50ms Latency)
+    if locationiq_key and locationiq_key.strip():
         try:
-            async with httpx.AsyncClient(timeout=4.0) as client:
-                auto_url = f"https://maps.googleapis.com/maps/api/place/autocomplete/json?input={httpx.URL(q).raw_path.decode('utf-8') if hasattr(httpx.URL(q), 'raw_path') else q}&types=(cities)&key={google_api_key}"
-                auto_res = await client.get(f"https://maps.googleapis.com/maps/api/place/autocomplete/json", params={"input": q, "types": "(cities)", "key": google_api_key})
-                auto_data = auto_res.json()
-                predictions = auto_data.get("predictions", [])[:5]
-                
-                if predictions:
-                    formatted_results = []
-                    for p in predictions:
-                        place_id = p.get("place_id")
-                        description = p.get("description")
-                        
-                        # Fetch Place Details
-                        det_res = await client.get("https://maps.googleapis.com/maps/api/place/details/json", params={"place_id": place_id, "fields": "geometry", "key": google_api_key})
-                        det_data = det_res.json().get("result", {})
-                        loc = det_data.get("geometry", {}).get("location", {})
-                        lat = loc.get("lat")
-                        lng = loc.get("lng")
-                        
-                        if lat is not None and lng is not None:
-                            # Fetch Timezone
-                            tz_res = await client.get("https://maps.googleapis.com/maps/api/timezone/json", params={"location": f"{lat},{lng}", "timestamp": int(datetime.utcnow().timestamp()), "key": google_api_key})
-                            tz_name = tz_res.json().get("timeZoneId") or "Asia/Kolkata"
-                            
-                            formatted_results.append({
-                                "formatted": description,
-                                "latitude": lat,
-                                "longitude": lng,
-                                "timezone": tz_name,
-                                "raw": p
-                            })
-                            
-                    if formatted_results:
-                        geocode_file_cache.set(query_key, formatted_results)
-                        geocode_mem_cache[query_key] = formatted_results
-                        return {"results": formatted_results}
-        except Exception as e:
-            print(f"[GooglePlacesProxy] Error: {e}, falling back to OpenCage...")
+            url = f"https://api.locationiq.com/v1/autocomplete?key={locationiq_key.strip()}&q={requests.utils.quote(q)}&limit=5&normalizecity=1"
+            def _fetch_locationiq():
+                res = requests.get(url, timeout=3)
+                if res.status_code == 200:
+                    return res.json()
+                return None
 
-    # 4. Fallback to OpenCage API
+            liq_data = await asyncio.to_thread(_fetch_locationiq)
+            if liq_data and isinstance(liq_data, list):
+                formatted_results = []
+                for item in liq_data:
+                    display_name = item.get("display_name", "")
+                    try:
+                        lat_val = float(item.get("lat", 0))
+                        lon_val = float(item.get("lon", 0))
+                    except (ValueError, TypeError):
+                        lat_val, lon_val = 0.0, 0.0
+
+                    formatted_results.append({
+                        "formatted": display_name,
+                        "latitude": lat_val,
+                        "longitude": lon_val,
+                        "timezone": "Asia/Kolkata",
+                        "raw": item
+                    })
+                    
+                geocode_file_cache.set(query_key, formatted_results)
+                geocode_mem_cache[query_key] = formatted_results
+                return {"results": formatted_results}
+        except Exception as e:
+            print(f"[LocationIQ Proxy] Error: {e}")
+
+    # 4. Fallback: OpenCage API
     try:
         results = await asyncio.to_thread(geocoder_client.geocode, q, no_annotations=0, limit=5, timeout=4)
         if not results:
