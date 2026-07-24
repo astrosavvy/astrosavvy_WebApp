@@ -47,7 +47,31 @@ function ProductPayment() {
         { amount: totalAmount }
       );
 
-      /* 2️⃣ Dynamic Description */
+      /* 2️⃣ Handle Mock Orders (when Razorpay secret is not set on backend) */
+      if (data.order?.mock) {
+        const verifyRes = await api.post("/api/shop/payment/verify", {
+          razorpay_order_id: data.order.id,
+          razorpay_payment_id: `pay_mock_${Date.now()}`,
+          razorpay_signature: "mock_signature",
+          cartItems: cartItems,
+          customer: {
+            name: checkoutData?.name,
+            phone: checkoutData?.phone,
+            email: checkoutData?.email,
+            address: checkoutData?.address,
+          },
+        });
+        if (verifyRes.data?.success) {
+          clearCart();
+          localStorage.removeItem("productCheckoutData");
+          window.location.href = "/payment-success";
+        } else {
+          window.location.href = "/payment-failure";
+        }
+        return;
+      }
+
+      /* 3️⃣ Dynamic Description for Live Razorpay Order */
       const productNames = cartItems
         .map((item) =>
           item.category === "rudraksha"

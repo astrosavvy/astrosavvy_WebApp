@@ -88,10 +88,11 @@ const Layout = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    fetch(import.meta.env.VITE_API_URL + "/api/health")
+    const baseUrl = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+    fetch(`${baseUrl}/api/health`)
       .then((res) => res.json())
-      .then((data) => console.log("✅ BACKEND CONNECTED:", data))
-      .catch((err) => console.error("❌ BACKEND ERROR:", err));
+      .then((data) => console.log("Backend Connected:", data))
+      .catch((err) => console.log("Backend Offline:", err));
   }, []);
 
   return (
