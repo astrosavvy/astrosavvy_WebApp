@@ -289,8 +289,20 @@ async def get_current_admin(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
     token = authorization.split(" ")[1]
     
+    # 1. Try Supabase admin token
     supabase_service = SupabaseService()
     user = supabase_service.verify_admin_token(token)
+    
+    # 2. Fallback to ShopAuthService JWT token (used by unified admin portal)
+    if not user:
+        try:
+            from src.services.shop_auth_service import ShopAuthService
+            shop_auth = ShopAuthService()
+            user = shop_auth.verify_token(token)
+        except Exception as e:
+            print(f"[AdminAuth] ShopAuth token check error: {e}")
+            user = None
+
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized admin session")
     return user
@@ -981,10 +993,10 @@ def get_admin_role(user: Dict[str, Any]) -> str:
     if not isinstance(metadata, dict):
         metadata = {}
     
-    role = metadata.get("role") or user.get("role") or ""
+    role = user.get("role") or metadata.get("role") or ""
     if role == "support" or "support" in email:
         return "support"
-    return "admin"
+    return role or "admin"
 
 
 @app.get("/api/admin/orders")
