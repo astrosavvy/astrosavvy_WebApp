@@ -1577,6 +1577,7 @@
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/geocode?q=${encodeURIComponent(query)}`);
                     const data = await response.json();
+                    console.log("[Geocode Query]", query, "Results count:", data.results ? data.results.length : 0);
                     
                     if (data.results && data.results.length > 0) {
                         autocompleteList.innerHTML = "";
@@ -1588,8 +1589,8 @@
                             div.style.borderBottom = "1px solid #F0F0F0";
                             div.innerText = res.formatted;
                             
-                            // Use mousedown & stopPropagation to prevent premature click-outside closes
-                            div.addEventListener("mousedown", (e) => {
+                            // Universal Touch & Mouse Selection Handler for Desktop + Mobile
+                            const selectCityItem = (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 birthplaceInput.value = res.formatted;
@@ -1597,7 +1598,11 @@
                                 autocompleteList.classList.remove("show");
                                 autocompleteList.style.display = "none";
                                 showError("");
-                            });
+                                console.log("✅ Selected birth city:", res.formatted);
+                            };
+                            div.addEventListener("pointerdown", selectCityItem);
+                            div.addEventListener("touchstart", selectCityItem, { passive: false });
+                            div.addEventListener("click", selectCityItem);
                             autocompleteList.appendChild(div);
                         });
                         autocompleteList.style.display = "block";
