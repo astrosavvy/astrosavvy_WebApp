@@ -336,35 +336,54 @@ class SupabaseService:
         # 2. Return order detail
         return self.get_order_by_id(order_id)
 
-    def get_orders(self, status: Optional[str] = None, search: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_orders(self, status: Optional[str] = None, search: Optional[str] = None, is_archived: bool = False) -> List[Dict[str, Any]]:
         if not self.is_configured():
             return []
         
-        query = self.client.table("orders").select("*, customers(*)")
-        
-        if status:
-            if status == "paid":
-                query = query.in_("order_status", ["paid", "processing", "delivered"])
+        try:
+            query = self.client.table("orders").select("*, customers(*)")
+            
+            if status:
+                if status == "paid":
+                    query = query.in_("order_status", ["paid", "processing", "delivered"])
+                else:
+                    query = query.eq("order_status", status)
+                
+            res = query.order("created_at", desc=True).execute()
+            orders = res.data or []
+            
+            if is_archived:
+                orders = [o for o in orders if o.get("is_archived") is True]
             else:
-                query = query.eq("order_status", status)
+                orders = [o for o in orders if not o.get("is_archived")]
             
-        res = query.order("created_at", desc=True).execute()
-        orders = res.data or []
-        
-        if search:
-            # Local filtering for joined customer fields to support complex contains
-            s = search.strip().lower()
-            filtered = []
-            for o in orders:
-                cust = o.get("customers") or {}
-                if (s in o["id"].lower() or 
-                    s in cust.get("full_name", "").lower() or 
-                    s in cust.get("email", "").lower() or 
-                    s in cust.get("mobile", "").lower()):
-                    filtered.append(o)
-            return filtered
-            
-        return orders
+            if search:
+                # Local filtering for joined customer fields to support complex contains
+                s = search.strip().lower()
+                filtered = []
+                for o in orders:
+                    cust = o.get("customers") or {}
+                    if (s in o["id"].lower() or 
+                        s in cust.get("full_name", "").lower() or 
+                        s in cust.get("email", "").lower() or 
+                        s in cust.get("mobile", "").lower()):
+                        filtered.append(o)
+                return filtered
+                
+            return orders
+        except Exception as e:
+            print(f"[Supabase] Error getting orders: {e}")
+            return []
+
+    def archive_order(self, order_id: str, is_archived: bool = True) -> bool:
+        if not self.is_configured():
+            return False
+        try:
+            res = self.client.table("orders").update({"is_archived": is_archived}).eq("id", order_id).execute()
+            return bool(res.data)
+        except Exception as e:
+            print(f"[Supabase] Error archiving order {order_id}: {e}")
+            return False
 
     # --- Payment Logging ---
     def create_payment(self, order_id: str, razorpay_order_id: str, amount: float = 499.00) -> str:
