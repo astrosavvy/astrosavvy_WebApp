@@ -7,13 +7,13 @@ from typing import Dict, Any, Optional
 class EmailService:
     def __init__(self):
         self.smtp_host = os.getenv("SENDPULSE_SMTP_HOST", "smtp-pulse.com")
-        self.smtp_port = int(os.getenv("SENDPULSE_SMTP_PORT", "465"))
-        self.smtp_user = os.getenv("SENDPULSE_SMTP_USER")
+        self.smtp_port = int(os.getenv("SENDPULSE_SMTP_PORT", "2525"))
+        self.smtp_user = os.getenv("SENDPULSE_SMTP_USER") or "orders@astrosavvysingh.com"
         # Support both SENDPULSE_SMTP_PASSWORD and SENDPULSE_SMTP_PASS naming conventions
-        self.smtp_pass = os.getenv("SENDPULSE_SMTP_PASSWORD") or os.getenv("SENDPULSE_SMTP_PASS")
+        self.smtp_pass = os.getenv("SENDPULSE_SMTP_PASSWORD") or os.getenv("SENDPULSE_SMTP_PASS") or "fmSCKfBYTQFLK"
         # Support SENDER_EMAIL and SENDPULSE_SENDER naming conventions
-        self.sender_email = os.getenv("SENDER_EMAIL") or os.getenv("SENDPULSE_SENDER") or self.smtp_user or "support@astrosavvysingh.com"
-        self.sender_name = os.getenv("SENDER_NAME", "AstroSavvy Order")
+        self.sender_email = os.getenv("SENDER_EMAIL") or os.getenv("SENDPULSE_SENDER") or self.smtp_user or "orders@astrosavvysingh.com"
+        self.sender_name = os.getenv("SENDER_NAME", "Acharya Savvy Singh")
 
     def is_configured(self) -> bool:
         return bool(self.smtp_user and self.smtp_pass)
