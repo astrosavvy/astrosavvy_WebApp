@@ -269,9 +269,9 @@ const ReportOrders = () => {
                           >
                             🔄 Rebuild
                           </button>
-                          {o.pdf_url && (
+                          {(o.report_url || o.pdf_url) && (
                             <a
-                              href={o.pdf_url}
+                              href={o.report_url || o.pdf_url}
                               target="_blank"
                               rel="noreferrer"
                               className="bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 text-[11px] px-3 py-1.5 rounded-lg transition font-semibold"

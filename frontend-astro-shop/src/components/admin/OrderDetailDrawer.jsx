@@ -140,6 +140,9 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
     return "bg-gray-100 text-gray-800 border border-gray-300";
   };
 
+  // ✅ Properly resolve report URL from report_url OR pdf_url property
+  const reportPdfUrl = order?.report_url || order?.pdf_url;
+
   if (!orderId) return null;
 
   return (
@@ -300,7 +303,7 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
                     <div className="flex items-center justify-between text-xs text-gray-600 mt-2">
                       <span>Report Storage Status:</span>
                       <span className="font-semibold text-purple-700 uppercase">
-                        {order?.pdf_url ? "Generated & Available on Supabase CDN" : "Pending Overlay Generation"}
+                        {reportPdfUrl ? "Generated & Available on Supabase CDN" : "Pending Overlay Generation"}
                       </span>
                     </div>
                   </div>
@@ -454,9 +457,9 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
                         <p className="text-[11px] text-gray-500 mt-0.5">
                           Saved to public bucket <code className="text-purple-700">reports/</code>.
                         </p>
-                        {order?.pdf_url && (
+                        {reportPdfUrl && (
                           <a
-                            href={order.pdf_url}
+                            href={reportPdfUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="text-[11px] text-purple-700 underline font-mono block mt-1"
@@ -507,9 +510,9 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
                     >
                       <span>✉️</span> Resend Email Notification
                     </button>
-                    {order?.pdf_url ? (
+                    {reportPdfUrl ? (
                       <a
-                        href={order.pdf_url}
+                        href={reportPdfUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-2 text-center"
@@ -531,9 +534,9 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                       📄 Live Report PDF Preview
                     </h3>
-                    {order?.pdf_url ? (
+                    {reportPdfUrl ? (
                       <iframe
-                        src={order.pdf_url}
+                        src={reportPdfUrl}
                         title="Love Report PDF Preview"
                         className="w-full h-[450px] rounded-lg border border-gray-200"
                       />
