@@ -1,23 +1,35 @@
 import { useEffect, useState } from "react";
 import api from "../utils/axios";
 import { useNavigate } from "react-router-dom";
+import BlogCard from "../components/BlogCard";
 
 function Blogs() {
-const [blogs, setBlogs] = useState([]);
-const navigate = useNavigate();
+  const [blogs, setBlogs] = useState([]);
+  const navigate = useNavigate();
 
-useEffect(() => {
-  fetchBlogs();
-}, []);
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
 
-const fetchBlogs = async () => {
-  try {
-    const { data } = await api.get("/api/shop/blogs");
-    setBlogs(data.blogs);
-  } catch (error) {
-    console.error(error);
-  }
-};
+  const fetchBlogs = async () => {
+    try {
+      const { data } = await api.get("/api/shop/blogs");
+      setBlogs(data.blogs || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getCoverUrl = (b) => {
+    if (!b) return null;
+    const img = b.cover_image || b.coverImage;
+    if (!img) return null;
+    if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) {
+      return img;
+    }
+    const baseUrl = import.meta.env.VITE_API_URL || "https://api.astrosavvysingh.com";
+    return img.startsWith("/") ? `${baseUrl}${img}` : `${baseUrl}/${img}`;
+  };
 
   return (
     <section className="relative bg-[white] overflow-hidden">
@@ -62,10 +74,18 @@ const fetchBlogs = async () => {
                     hover:shadow-xl transition">
 
       {/* IMAGE */}
- 
+      {getCoverUrl(blogs[0]) && (
+        <div className="md:col-span-1 flex justify-center items-center">
+          <img
+            src={getCoverUrl(blogs[0])}
+            alt={blogs[0].title}
+            className="w-full max-h-64 object-cover rounded-2xl shadow-md border border-[#606C33]/20"
+          />
+        </div>
+      )}
 
       {/* CONTENT */}
-      <div className="md:col-span-2 flex flex-col justify-center">
+      <div className={`${getCoverUrl(blogs[0]) ? "md:col-span-2" : "md:col-span-3"} flex flex-col justify-center`}>
 
         <span className="inline-block mb-3 text-xs uppercase tracking-wide
                          bg-[#BC6C25]/10 text-[#BC6C25]
@@ -103,29 +123,7 @@ const fetchBlogs = async () => {
 {blogs.length > 1 && (
   <div className="grid md:grid-cols-3 gap-8 mt-16">
     {blogs.slice(1).map((blog) => (
-      <div
-        key={blog._id}
-        onClick={() => navigate(`/blogs/${blog.slug}`)}
-        className="cursor-pointer bg-[#F5EBE0] border border-[#606C33]/40 rounded-2xl
-                   overflow-hidden shadow-sm hover:shadow-xl
-                   transition hover:-translate-y-1"
-      >
-        <img
-          src={`${import.meta.env.VITE_API_URL}${blog.coverImage}`}
-          alt={blog.title}
-          className="w-full h-56 object-cover"
-        />
-
-        <div className="p-6">
-          <h3 className="font-['Playfair_Display'] text-lg font-semibold text-[#1B2624] mb-2">
-            {blog.title}
-          </h3>
-
-          <p className="text-sm font-['Poppins'] text-[#1B2624]/70">
-            {blog.excerpt}
-          </p>
-        </div>
-      </div>
+      <BlogCard key={blog.id || blog._id} blog={blog} />
     ))}
   </div>
 )}
