@@ -460,7 +460,9 @@ class SupabaseService:
     def upload_blog_image(self, filename: str, image_bytes: bytes, content_type: str = "image/jpeg") -> Optional[str]:
         """Uploads a blog image to Supabase 'blog-images' storage bucket. Returns public URL."""
         if not self.is_configured():
-            return None
+            import base64
+            b64 = base64.b64encode(image_bytes).decode('utf-8')
+            return f"data:{content_type};base64,{b64}"
         
         bucket_name = "blog-images"
         try:
@@ -483,7 +485,9 @@ class SupabaseService:
                 return self.client.storage.from_("reports").get_public_url(fallback_filename)
             except Exception as e2:
                 print(f"[SupabaseStorage] Fallback image upload failed: {e2}")
-                return None
+                import base64
+                b64 = base64.b64encode(image_bytes).decode('utf-8')
+                return f"data:{content_type};base64,{b64}"
 
     def upload_pdf_report(self, order_id: str, local_pdf_path: str) -> Optional[str]:
         """Uploads a PDF file to Supabase 'reports' storage bucket. Returns public URL."""
