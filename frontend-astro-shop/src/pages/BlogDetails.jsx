@@ -22,6 +22,19 @@ function BlogDetails() {
     }
   };
 
+  const getPublishedDate = (blogObj) => {
+    if (!blogObj) return null;
+    const rawDate = blogObj.created_at || blogObj.createdAt || blogObj.created_time;
+    if (!rawDate) return null;
+    const d = new Date(rawDate);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -42,40 +55,40 @@ function BlogDetails() {
     );
   }
 
+  const publishedDate = getPublishedDate(blog);
+  const coverUrl = blog.cover_image || blog.coverImage;
+
   return (
     <section className="bg-white min-h-screen py-20 px-6">
       <div className="max-w-4xl mx-auto">
-
         {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-bold font-['Playfair_Display']
-                       text-[#1B2624] mb-6">
+        <h1 className="text-3xl md:text-4xl font-bold font-['Playfair_Display'] text-[#1B2624] mb-4">
           {blog.title}
         </h1>
 
-        {/* Date */}
-        <p className="text-sm font-['Poppins'] text-[#606C33]/80 mb-8">
-          {new Date(blog.createdAt).toLocaleDateString()}
-        </p>
+        {/* Date: Only show if valid, otherwise hide completely */}
+        {publishedDate && (
+          <p className="text-sm font-['Poppins'] text-[#606C33]/80 mb-8 font-medium">
+            📅 {publishedDate}
+          </p>
+        )}
 
         {/* Cover Image */}
-        {blog.coverImage && (
+        {coverUrl && (
           <div className="mb-10">
             <img
-              src={`${import.meta.env.VITE_API_URL}${blog.coverImage}`}
+              src={coverUrl.startsWith("http") ? coverUrl : `${import.meta.env.VITE_API_URL}${coverUrl}`}
               alt={blog.title}
-              className="w-full rounded-2xl shadow-lg"
+              className="w-full rounded-2xl shadow-lg max-h-[450px] object-cover"
             />
           </div>
         )}
 
         {/* Content */}
         <div
-  className="prose max-w-none
-             font-['Poppins']
-             text-[#1B2624]/90
-             leading-relaxed"
-  dangerouslySetInnerHTML={{ __html: blog.content }}
-/>
+          className="prose max-w-none font-['Poppins'] text-[#1B2624]/90 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: blog.content }}
+        />
       </div>
     </section>
   );
