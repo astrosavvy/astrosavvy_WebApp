@@ -172,7 +172,9 @@ function EditBlog() {
             </label>
           </div>
           {coverImage && (
-            <img src={coverImage} alt="Cover preview" className="mt-3 h-40 w-full object-cover rounded-lg border" />
+            <div className="mt-3 bg-gray-50 p-2 border border-gray-200 rounded-xl">
+              <img src={coverImage} alt="Cover preview" className="max-h-80 w-full object-contain rounded-lg shadow-sm" />
+            </div>
           )}
         </div>
 

@@ -75,11 +75,11 @@ function BlogDetails() {
 
         {/* Cover Image */}
         {coverUrl && (
-          <div className="mb-10">
+          <div className="mb-10 bg-gray-50/60 p-2 border border-gray-100 rounded-2xl shadow-md">
             <img
               src={coverUrl.startsWith("http") ? coverUrl : `${import.meta.env.VITE_API_URL}${coverUrl}`}
               alt={blog.title}
-              className="w-full rounded-2xl shadow-lg max-h-[450px] object-cover"
+              className="w-full max-h-[480px] object-contain rounded-xl"
             />
           </div>
         )}
