@@ -152,8 +152,8 @@ function CreateBlog() {
             </label>
           </div>
           {coverImage && (
-            <div className="mt-3 bg-gray-50 p-2 border border-gray-200 rounded-xl">
-              <img src={coverImage} alt="Cover preview" className="max-h-80 w-full object-contain rounded-lg shadow-sm" />
+            <div className="mt-3 bg-white p-2 border border-gray-200 rounded-xl shadow-md">
+              <img src={coverImage} alt="Cover preview" className="max-h-[500px] w-full object-contain rounded-lg" />
             </div>
           )}
         </div>
