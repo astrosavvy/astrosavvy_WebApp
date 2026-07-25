@@ -1107,8 +1107,8 @@ async def api_admin_manual_upload(order_id: str, req: ManualUploadRequest, admin
 
 
 @app.get("/api/admin/orders/{order_id}")
-async def api_admin_order_detail(order_id: str, admin: Any = Header(None)):
-    user = await get_current_admin(admin)
+async def api_admin_order_detail(order_id: str, request: Request):
+    user = await get_current_admin(request)
     role = get_admin_role(user)
     
     supabase = SupabaseService()
@@ -1136,6 +1136,20 @@ async def api_admin_order_detail(order_id: str, admin: Any = Header(None)):
         
     logs = supabase.get_email_logs(order_id)
     return {"order": order, "email_logs": logs, "role": role}
+
+
+@app.put("/api/admin/orders/{order_id}/details")
+async def api_admin_update_order_details(order_id: str, request: Request):
+    user = await get_current_admin(request)
+    if get_admin_role(user) == "support":
+        raise HTTPException(status_code=403, detail="Forbidden: Customer Support role cannot perform write actions.")
+        
+    data = await request.json()
+    supabase = SupabaseService()
+    success = supabase.update_order_details(order_id, data)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update order birth details")
+    return {"status": "success", "message": "Order details updated successfully"}
 
 
 class UpdateNotesRequest(BaseModel):

@@ -324,6 +324,38 @@ class SupabaseService:
         res = self.client.table("orders").select("*, customers(*), payments(*)").eq("id", order_id).execute()
         return res.data[0] if res.data else None
 
+    def update_order_details(self, order_id: str, details_data: Dict[str, Any]) -> bool:
+        """Updates birth details and customer information for a Love Report order."""
+        if not self.is_configured():
+            return False
+        try:
+            order_update = {}
+            for k in ["dob", "tob", "place", "latitude", "longitude", "timezone", "gender", 
+                      "p1_name", "p1_gender", "p1_dob", "p1_tob", "p1_place",
+                      "p2_name", "p2_gender", "p2_dob", "p2_tob", "p2_place"]:
+                if k in details_data:
+                    order_update[k] = details_data[k]
+                    
+            if order_update:
+                self.client.table("orders").update(order_update).eq("id", order_id).execute()
+                
+            if "customer_name" in details_data or "email" in details_data or "mobile" in details_data:
+                order = self.get_order_by_id(order_id)
+                if order and order.get("customer_id"):
+                    cust_update = {}
+                    if "customer_name" in details_data:
+                        cust_update["full_name"] = details_data["customer_name"]
+                    if "email" in details_data:
+                        cust_update["email"] = details_data["email"]
+                    if "mobile" in details_data:
+                        cust_update["mobile"] = details_data["mobile"]
+                    if cust_update:
+                        self.client.table("customers").update(cust_update).eq("id", order["customer_id"]).execute()
+            return True
+        except Exception as e:
+            print(f"[SupabaseService] Error updating order details for {order_id}: {e}")
+            return False
+
     def get_order_by_rz_id(self, rz_order_id: str) -> Optional[Dict[str, Any]]:
         """Resolves the internal order UUID and customer details from a Razorpay Order ID."""
         if not self.is_configured():
