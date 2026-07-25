@@ -6,6 +6,7 @@
  * 1. Edge-level Server-Side Mobile/Desktop User-Agent Detection (Zero Client-Side Redirect Loops)
  * 2. Same-Origin Server-Side Proxying for /api/* requests (Zero CORS/Network Errors)
  * 3. Clean Headers for Razorpay Floating Checkout Window
+ * 4. Explicit UTF-8 Content-Type Headers to prevent character/emoji encoding corruption across all devices
  */
 
 export default {
@@ -48,7 +49,7 @@ export default {
       } catch (err) {
         return new Response(JSON.stringify({ error: "Backend proxy error", detail: err.message }), {
           status: 502,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          headers: { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" }
         });
       }
     }
@@ -69,15 +70,27 @@ export default {
       assetPath = "/success.html";
     }
 
-    // Fetch static asset from Cloudflare KV / Assets binding
+    // Fetch static asset from Cloudflare KV / Assets binding with explicit UTF-8 header
     try {
-      if (env.ASSETS) {
+      let res;
+      if (env && env.ASSETS) {
         const assetUrl = new URL(assetPath, request.url);
-        return await env.ASSETS.fetch(assetUrl);
+        res = await env.ASSETS.fetch(assetUrl);
+      } else {
+        res = await fetch(new URL(assetPath, request.url));
       }
-      
-      // Fallback: fetch static asset from current site origin
-      return await fetch(new URL(assetPath, request.url));
+
+      if (assetPath.endsWith(".html") || assetPath === "/" || !assetPath.includes(".")) {
+        const responseHeaders = new Headers(res.headers);
+        responseHeaders.set("Content-Type", "text/html; charset=utf-8");
+        return new Response(res.body, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: responseHeaders,
+        });
+      }
+
+      return res;
     } catch (e) {
       return new Response("Asset not found", { status: 404 });
     }
