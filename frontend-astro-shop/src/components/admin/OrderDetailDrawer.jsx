@@ -9,24 +9,14 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
   const [savingDetails, setSavingDetails] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Unified birth details state
+  // Single person birth details state
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
-  
-  // Person A
-  const [p1Name, setP1Name] = useState("");
-  const [p1Gender, setP1Gender] = useState("Male");
-  const [p1Dob, setP1Dob] = useState("");
-  const [p1Tob, setP1Tob] = useState("");
-  const [p1Place, setP1Place] = useState("");
-
-  // Person B
-  const [p2Name, setP2Name] = useState("");
-  const [p2Gender, setP2Gender] = useState("Female");
-  const [p2Dob, setP2Dob] = useState("");
-  const [p2Tob, setP2Tob] = useState("");
-  const [p2Place, setP2Place] = useState("");
+  const [gender, setGender] = useState("Female");
+  const [dob, setDob] = useState("");
+  const [tob, setTob] = useState("");
+  const [place, setPlace] = useState("");
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("adminToken");
@@ -54,17 +44,11 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
         setEmail(o.customers?.email || o.email || "");
         setMobile(o.customers?.mobile || o.mobile || "");
 
-        setP1Name(o.p1_name || o.customers?.full_name || "Partner 1");
-        setP1Gender(o.p1_gender || o.gender || "Male");
-        setP1Dob(o.p1_dob || o.dob || "");
-        setP1Tob(o.p1_tob || o.tob || "");
-        setP1Place(o.p1_place || o.place || "");
-
-        setP2Name(o.p2_name || "Partner 2");
-        setP2Gender(o.p2_gender || "Female");
-        setP2Dob(o.p2_dob || "");
-        setP2Tob(o.p2_tob || "");
-        setP2Place(o.p2_place || "");
+        const g = o.gender || o.geocoded_place?.gender || "Female";
+        setGender(g);
+        setDob(o.dob || "");
+        setTob(o.tob || "");
+        setPlace(o.place || "");
       }
     } catch (err) {
       console.error("Failed to fetch order detail:", err);
@@ -88,16 +72,10 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
           customer_name: customerName,
           email,
           mobile,
-          p1_name: p1Name,
-          p1_gender: p1Gender,
-          p1_dob: p1Dob,
-          p1_tob: p1Tob,
-          p1_place: p1Place,
-          p2_name: p2Name,
-          p2_gender: p2Gender,
-          p2_dob: p2Dob,
-          p2_tob: p2Tob,
-          p2_place: p2Place,
+          gender,
+          dob,
+          tob,
+          place,
         },
         { headers: getAuthHeaders() }
       );
@@ -105,7 +83,7 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
       if (rebuild) {
         await handleTriggerRegenerate();
       } else {
-        alert("Order birth details saved successfully!");
+        alert("Birth details saved successfully!");
         fetchOrderDetail();
         if (onRefresh) onRefresh();
       }
@@ -125,7 +103,7 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
         {},
         { headers: getAuthHeaders() }
       );
-      alert("PDF Regeneration triggered cleanly!");
+      alert("PDF Report regeneration triggered cleanly!");
       fetchOrderDetail();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -170,7 +148,7 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
       {/* Modal Container */}
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-200">
         
-        {/* White Themed Header */}
+        {/* Header */}
         <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white p-5 flex justify-between items-center border-b border-purple-800">
           <div>
             <div className="flex items-center gap-3">
@@ -233,7 +211,7 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
               {/* --- TAB 1: OVERVIEW & PAYMENT --- */}
               {activeTab === "overview" && (
                 <div className="space-y-6">
-                  {/* Customer Contact Card (WhatsApp removed per user directive) */}
+                  {/* Customer Contact Card */}
                   <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                       👤 Customer Contact Information
@@ -302,7 +280,7 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
                         ))
                       ) : (
                         <div className="p-4 bg-gray-50 rounded-lg text-xs text-gray-600 border border-gray-200">
-                          Base Order Amount: <span className="font-bold text-gray-900">₹499.00 INR</span> (Standard Love Compatibility Report)
+                          Base Order Amount: <span className="font-bold text-gray-900">₹499.00 INR</span> (Standard Love Report)
                         </div>
                       )}
                     </div>
@@ -329,141 +307,82 @@ const OrderDetailDrawer = ({ orderId, onClose, onRefresh }) => {
                 </div>
               )}
 
-              {/* --- TAB 2: EDIT BIRTH DETAILS (UNIFIED SINGLE FORM) --- */}
+              {/* --- TAB 2: EDIT BIRTH DETAILS (SINGLE PERSON FORM) --- */}
               {activeTab === "edit" && (
                 <div className="space-y-6">
                   <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl text-xs text-purple-900 flex items-start gap-2">
                     <span>💡</span>
                     <div>
-                      <strong>Unified Couple Birth Details Editor</strong>
+                      <strong>Customer Birth Details Editor</strong>
                       <p className="mt-0.5">
-                        Correct birth dates, times, or locations for both partners below. Click <strong>Save &amp; Rebuild PDF</strong> to update the database and recalculate planetary overlay charts instantly!
+                        Correct birth date, time, or location for the customer. Click <strong>Save &amp; Rebuild PDF</strong> to update the database and recalculate planetary overlay charts instantly!
                       </p>
                     </div>
                   </div>
 
-                  {/* UNIFIED SINGLE FORM SECTION */}
-                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
+                  {/* SINGLE PERSON FORM */}
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                     <h3 className="text-sm font-bold text-purple-900 uppercase tracking-wider border-b border-gray-100 pb-3 flex items-center gap-2">
-                      <span>👩‍❤️‍👨</span> Edit Both Partners&apos; Birth Details
+                      <span>👤</span> Customer Birth Details
                     </h3>
 
-                    {/* PARTNER 1 SECTION */}
-                    <div className="space-y-3 bg-purple-50/40 p-4 rounded-xl border border-purple-100">
-                      <h4 className="text-xs font-bold text-purple-800 uppercase flex items-center gap-1.5">
-                        <span>👦</span> Partner 1 (Person A)
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Full Name</label>
-                          <input
-                            type="text"
-                            value={p1Name}
-                            onChange={(e) => setP1Name(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Gender</label>
-                          <select
-                            value={p1Gender}
-                            onChange={(e) => setP1Gender(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          >
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date of Birth</label>
-                          <input
-                            type="date"
-                            value={p1Dob}
-                            onChange={(e) => setP1Dob(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Time of Birth</label>
-                          <input
-                            type="time"
-                            value={p1Tob}
-                            onChange={(e) => setP1Tob(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Place of Birth</label>
-                          <input
-                            type="text"
-                            value={p1Place}
-                            onChange={(e) => setP1Place(e.target.value)}
-                            placeholder="City, State, Country"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Customer Full Name</label>
+                        <input
+                          type="text"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                          required
+                        />
                       </div>
-                    </div>
-
-                    {/* PARTNER 2 SECTION */}
-                    <div className="space-y-3 bg-pink-50/40 p-4 rounded-xl border border-pink-100">
-                      <h4 className="text-xs font-bold text-pink-800 uppercase flex items-center gap-1.5">
-                        <span>👧</span> Partner 2 (Person B)
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Full Name</label>
-                          <input
-                            type="text"
-                            value={p2Name}
-                            onChange={(e) => setP2Name(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Gender</label>
-                          <select
-                            value={p2Gender}
-                            onChange={(e) => setP2Gender(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          >
-                            <option value="Female">Female</option>
-                            <option value="Male">Male</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date of Birth</label>
-                          <input
-                            type="date"
-                            value={p2Dob}
-                            onChange={(e) => setP2Dob(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Time of Birth</label>
-                          <input
-                            type="time"
-                            value={p2Tob}
-                            onChange={(e) => setP2Tob(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Place of Birth</label>
-                          <input
-                            type="text"
-                            value={p2Place}
-                            onChange={(e) => setP2Place(e.target.value)}
-                            placeholder="City, State, Country"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Gender</label>
+                        <select
+                          value={gender}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        >
+                          <option value="Female">Female</option>
+                          <option value="Male">Male</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date of Birth</label>
+                        <input
+                          type="date"
+                          value={dob}
+                          onChange={(e) => setDob(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Time of Birth</label>
+                        <input
+                          type="time"
+                          value={tob}
+                          onChange={(e) => setTob(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Place of Birth</label>
+                        <input
+                          type="text"
+                          value={place}
+                          onChange={(e) => setPlace(e.target.value)}
+                          placeholder="City, State, Country"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                          required
+                        />
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 pt-2">
+                    <div className="flex gap-4 pt-4">
                       <button
                         type="button"
                         onClick={() => handleSaveDetails(false)}

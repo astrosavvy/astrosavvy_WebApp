@@ -325,14 +325,12 @@ class SupabaseService:
         return res.data[0] if res.data else None
 
     def update_order_details(self, order_id: str, details_data: Dict[str, Any]) -> bool:
-        """Updates birth details and customer information for a Love Report order."""
+        """Updates birth details and customer information for an order."""
         if not self.is_configured():
             return False
         try:
             order_update = {}
-            for k in ["dob", "tob", "place", "latitude", "longitude", "timezone", "gender", 
-                      "p1_name", "p1_gender", "p1_dob", "p1_tob", "p1_place",
-                      "p2_name", "p2_gender", "p2_dob", "p2_tob", "p2_place"]:
+            for k in ["dob", "tob", "place", "latitude", "longitude", "timezone", "gender"]:
                 if k in details_data:
                     order_update[k] = details_data[k]
                     
