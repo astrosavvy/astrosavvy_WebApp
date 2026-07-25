@@ -48,7 +48,6 @@ function AdminBlogs() {
     }
   };
 
-  // Helper calculations for extra metadata without DB changes
   const calculateContentStats = (htmlContent = "") => {
     const plainText = htmlContent.replace(/<[^>]+>/g, " ").trim();
     const words = plainText ? plainText.split(/\s+/).length : 0;
@@ -61,18 +60,18 @@ function AdminBlogs() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">
+    <div className="min-h-screen bg-gray-50 text-gray-800 p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-800 shadow-xl">
+        {/* White Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
           <div>
             <div className="flex items-center gap-3">
               <span className="text-3xl">📝</span>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-purple-950">
                 Editorial Blog Suite
               </h1>
             </div>
-            <p className="text-xs md:text-sm text-slate-400 mt-1">
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
               Create &amp; edit articles with Tiptap editor, drag &amp; drop images &amp; content analytics ({blogs.length} published articles)
             </p>
           </div>
@@ -80,13 +79,13 @@ function AdminBlogs() {
           <div className="flex gap-3">
             <button
               onClick={() => navigate("/admin")}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-4 py-2.5 rounded-xl transition text-xs border border-slate-700"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2.5 rounded-xl transition text-xs border border-gray-300"
             >
               ← Portal
             </button>
             <button
               onClick={() => navigate("/admin/create-blog")}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition text-xs shadow-lg flex items-center gap-2"
+              className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-5 py-2.5 rounded-xl transition text-xs shadow-sm flex items-center gap-2"
             >
               <span>✨</span> Create New Blog
             </button>
@@ -94,21 +93,21 @@ function AdminBlogs() {
         </div>
 
         {/* Search Bar */}
-        <div className="bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
           <input
             type="text"
             placeholder="🔍 Search blogs by title or keyword..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-2.5 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
 
         {/* Blog Table */}
-        <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-xs text-gray-600">
+              <thead className="bg-purple-50 text-purple-900 font-bold uppercase tracking-wider border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4">Blog Title &amp; Slug</th>
                   <th className="px-6 py-4">Content Metrics</th>
@@ -117,16 +116,16 @@ function AdminBlogs() {
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-12 text-slate-500">
+                    <td colSpan="5" className="text-center py-12 text-gray-400">
                       Loading articles...
                     </td>
                   </tr>
                 ) : filteredBlogs.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-12 text-slate-500">
+                    <td colSpan="5" className="text-center py-12 text-gray-400">
                       No blog posts found. Click &ldquo;Create New Blog&rdquo; to draft one!
                     </td>
                   </tr>
@@ -139,33 +138,33 @@ function AdminBlogs() {
                     const hasExcerpt = Boolean(blog.excerpt);
 
                     return (
-                      <tr key={blogId} className="hover:bg-indigo-950/20 transition">
+                      <tr key={blogId} className="hover:bg-purple-50/60 transition">
                         <td className="px-6 py-4">
-                          <div className="font-bold text-slate-100 text-sm leading-snug">
+                          <div className="font-bold text-gray-900 text-sm leading-snug">
                             {blog.title}
                           </div>
-                          <div className="text-[11px] font-mono text-indigo-400 mt-0.5">
+                          <div className="text-[11px] font-mono text-purple-700 mt-0.5">
                             /{blog.slug || "slug"}
                           </div>
                         </td>
 
                         <td className="px-6 py-4 text-[11px]">
-                          <div className="text-slate-300 font-semibold">{words} words</div>
-                          <div className="text-slate-400">⏱️ ~{readingTime} min read</div>
+                          <div className="text-gray-800 font-semibold">{words} words</div>
+                          <div className="text-gray-500">⏱️ ~{readingTime} min read</div>
                         </td>
 
                         <td className="px-6 py-4">
                           <div className="flex gap-1.5">
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                hasCover ? "bg-emerald-950 text-emerald-300 border border-emerald-800" : "bg-slate-800 text-slate-500"
+                                hasCover ? "bg-emerald-100 text-emerald-800 border border-emerald-200" : "bg-gray-100 text-gray-400"
                               }`}
                             >
                               {hasCover ? "Cover 📷" : "No Cover"}
                             </span>
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                hasExcerpt ? "bg-purple-950 text-purple-300 border border-purple-800" : "bg-slate-800 text-slate-500"
+                                hasExcerpt ? "bg-purple-100 text-purple-800 border border-purple-200" : "bg-gray-100 text-gray-400"
                               }`}
                             >
                               {hasExcerpt ? "Summary 📝" : "No Excerpt"}
@@ -189,14 +188,14 @@ function AdminBlogs() {
                           <div className="flex justify-center gap-2">
                             <button
                               onClick={() => navigate(`/admin/edit-blog/${blogId}`)}
-                              className="bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 text-[11px] px-3 py-1.5 rounded-lg transition font-semibold"
+                              className="bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-200 text-[11px] px-3 py-1.5 rounded-lg transition font-semibold"
                             >
                               ✏️ Edit
                             </button>
 
                             <button
                               onClick={() => handleDelete(blogId)}
-                              className="bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 text-[11px] px-3 py-1.5 rounded-lg transition font-semibold"
+                              className="bg-red-100 hover:bg-red-200 text-red-800 border border-red-200 text-[11px] px-3 py-1.5 rounded-lg transition font-semibold"
                             >
                               🗑️ Delete
                             </button>
