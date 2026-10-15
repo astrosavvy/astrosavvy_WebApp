@@ -36,11 +36,13 @@ function ProductDetails() {
   const isRudraksha = product.category === "rudraksha";
   const isPotli = product.category === "potli";
 
-  const savings = product.originalPrice && product.price && product.originalPrice > product.price
-    ? product.originalPrice - product.price
+  const originalPrice = product.originalPrice ?? product.original_price;
+  const currentPrice = product.price;
+  const savings = originalPrice && currentPrice && Number(originalPrice) > Number(currentPrice)
+    ? Number(originalPrice) - Number(currentPrice)
     : 0;
 
-  const discount = savings > 0 ? Math.round((savings / product.originalPrice) * 100) : 0;
+  const discount = savings > 0 ? Math.round((savings / Number(originalPrice)) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[#FFFBF7] text-[#4A3728] pb-32 selection:bg-[#5D101D] selection:text-white">
@@ -57,7 +59,7 @@ function ProductDetails() {
 
         {/* IMAGE CAROUSEL */}
         <div className="relative group">
-          <div className={`absolute -inset-4 rounded-[3rem] blur-2xl opacity-20 ${isRudraksha ? 'bg-orange-200' : 'bg-rose-200'}`} />
+          <div className={`absolute -inset-4 rounded-[3rem] blur-2xl opacity-20 ${isRudraksha ? 'bg-orange-200' : isPotli ? 'bg-amber-200' : 'bg-rose-200'}`} />
           <div className="relative bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/50">
             <img
               src={product.images?.[currentImage]}
@@ -77,26 +79,26 @@ function ProductDetails() {
         {/* CORE INFO */}
         <div className="space-y-8 lg:pt-6">
           <div className="space-y-4">
-            <span className={`px-4 py-1 rounded-full text-[10px] tracking-[0.2em] font-bold uppercase border ${isRudraksha ? 'border-orange-200 text-orange-700 bg-orange-50' : 'border-rose-200 text-rose-700 bg-rose-50'}`}>
-              {isRudraksha ? `Ancient ${product.origin} Wisdom` : 'Divine Connection'}
+            <span className={`px-4 py-1 rounded-full text-[10px] tracking-[0.2em] font-bold uppercase border ${isRudraksha ? 'border-orange-200 text-orange-700 bg-orange-50' : isPotli ? 'border-amber-200 text-amber-800 bg-amber-50' : 'border-rose-200 text-rose-700 bg-rose-50'}`}>
+              {isRudraksha ? `Ancient ${product.origin} Wisdom` : isPotli ? 'Sacred Puja Offering' : 'Divine Connection'}
             </span>
             <h1 className="text-4xl lg:text-5xl font-bold text-[#5D101D] leading-tight font-serif">
               {isRudraksha ? product.title : product.name}
             </h1>
             <p className="text-xl text-gray-600 font-light italic">
-              {isRudraksha ? product.subtitle : `"${product.shortDescription}"`}
+              {isRudraksha ? product.subtitle : (product.shortDescription || product.short_description ? `"${product.shortDescription || product.short_description}"` : "")}
             </p>
           </div>
 
           <div className="flex items-baseline gap-4">
             <span className="text-4xl font-bold text-[#8B0000]">
-              {product.price ? `₹${product.price.toLocaleString()}` : "Call for Pricing"}
+              {product.price ? `₹${Number(product.price).toLocaleString()}` : "Call for Pricing"}
             </span>
 
             {savings > 0 && (
               <>
                 <span className="text-xl line-through text-gray-400">
-                  ₹{product.originalPrice.toLocaleString()}
+                  ₹{Number(originalPrice).toLocaleString()}
                 </span>
                 <span className="text-green-600 font-bold bg-green-50 px-3 py-1 rounded-lg text-sm">
                   {discount}% OFF
@@ -226,7 +228,29 @@ function ProductDetails() {
 
         {/* ---------------- POTLI SPECIFIC UI ---------------- */}
         {isPotli && (
-          <div className="space-y-20">
+          <div className="space-y-16">
+            {/* Special Highlight: Puja Vidhan by Pandit Ji */}
+            <section className="bg-gradient-to-r from-amber-50 via-rose-50 to-orange-50 border border-amber-200/70 p-8 md:p-12 rounded-[3rem] shadow-sm relative overflow-hidden">
+              <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#5D101D] text-white">
+                    <span>🙏</span> Special Highlight
+                  </div>
+                  <h3 className="text-3xl md:text-4xl font-serif font-bold text-[#5D101D]">
+                    Puja Vidhan Performed by Pandit Ji
+                  </h3>
+                  <p className="text-gray-700 text-base md:text-lg leading-relaxed max-w-3xl">
+                    Make your Karwa Chauth celebrations more meaningful with guidance rooted in traditional Hindu puja practices. This special offering is designed to help you observe your vrat with devotion, faith, and a focus on your family's well-being.
+                  </p>
+                </div>
+                <div className="bg-white/90 backdrop-blur border border-amber-200 p-6 rounded-3xl text-center shrink-0 shadow-md">
+                  <span className="text-4xl">🪔</span>
+                  <p className="text-xs font-bold text-[#5D101D] uppercase tracking-wider mt-2">100% Vedic Vidhi</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Authentic & Consecrated</p>
+                </div>
+              </div>
+            </section>
+
             <section className="text-center max-w-3xl mx-auto space-y-6">
               <div className="text-[#E6BE8A] text-2xl">✧ ✧ ✧</div>
               <p className="text-gray-700 leading-relaxed text-xl font-light">
@@ -236,9 +260,9 @@ function ProductDetails() {
 
             <div className="grid md:grid-cols-2 gap-8">
               <section className="bg-white p-10 rounded-[3rem] shadow-lg border border-gray-50">
-                <h2 className="text-2xl font-bold mb-8 text-[#5D101D] border-b pb-4">Key Features</h2>
+                <h2 className="text-2xl font-bold mb-8 text-[#5D101D] border-b pb-4">Product Highlights</h2>
                 <ul className="space-y-4">
-                  {product.symbolism?.map((item, i) => (
+                  {(product.symbolism?.length ? product.symbolism : product.contents)?.map((item, i) => (
                     <li key={i} className="flex gap-4 items-center text-gray-700">
                       <span className="text-[#B27D62]">✦</span> {item}
                     </li>
@@ -249,7 +273,7 @@ function ProductDetails() {
               <section className="bg-white p-10 rounded-[3rem] shadow-lg border border-gray-50">
                 <h2 className="text-2xl font-bold mb-8 text-[#5D101D] border-b pb-4">Who Is It For?</h2>
                 <ul className="space-y-4">
-                  {product.whoIsItFor?.map((item, i) => (
+                  {(product.whoIsItFor?.length ? product.whoIsItFor : product.who_is_it_for)?.map((item, i) => (
                     <li key={i} className="flex gap-4 items-center text-gray-700">
                       <span className="text-[#B27D62]">✦</span> {item}
                     </li>
@@ -259,7 +283,7 @@ function ProductDetails() {
             </div>
 
             <section className="bg-white p-10 rounded-[3rem] shadow-lg border border-gray-50">
-              <h2 className="text-2xl font-bold mb-8 text-[#5D101D] border-b pb-4">Benefits</h2>
+              <h2 className="text-2xl font-bold mb-8 text-[#5D101D] border-b pb-4">Divine Benefits</h2>
               <ul className="space-y-4">
                 {product.benefits?.map((item, i) => (
                   <li key={i} className="flex gap-4 items-center text-gray-700">
@@ -271,8 +295,8 @@ function ProductDetails() {
           </div>
         )}
 
-        {/* ---------------- UNIVERSAL RITUAL BOX ---------------- */}
-        {isBracelet &&
+        {/* ---------------- UNIVERSAL RITUAL / PUJA VIDHAN BOX ---------------- */}
+        {(isBracelet || isPotli) &&
           product.ritual &&
           (product.ritual.energized ||
             product.ritual.wearDay ||
@@ -283,7 +307,9 @@ function ProductDetails() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
               <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <h2 className="text-4xl font-bold mb-6 font-serif text-[#E6BE8A]">Ritual & Activation</h2>
+                  <h2 className="text-4xl font-bold mb-6 font-serif text-[#E6BE8A]">
+                    {isPotli ? "🙏 Sacred Puja Vidhan" : "Ritual & Activation"}
+                  </h2>
                   {product.ritual?.energized && (
                     <p className="text-lg text-rose-100 font-light leading-relaxed">{product.ritual.energized}</p>
                   )}
@@ -291,13 +317,13 @@ function ProductDetails() {
                 <div className="space-y-4 bg-black/20 p-8 rounded-3xl border border-white/10">
                   {product.ritual?.wearDay && (
                     <div className="flex justify-between border-b border-white/10 pb-2">
-                      <span className="text-rose-200">Auspicious Day:</span>
+                      <span className="text-rose-200">{isPotli ? "Auspicious Occasion:" : "Auspicious Day:"}</span>
                       <span className="font-bold">{product.ritual.wearDay}</span>
                     </div>
                   )}
                   {(product.ritual?.wearHand || product.ritual?.hand) && (
                     <div className="flex justify-between border-b border-white/10 pb-2">
-                      <span className="text-rose-200">Hand/Side:</span>
+                      <span className="text-rose-200">{isPotli ? "Puja Sthapana:" : "Hand/Side:"}</span>
                       <span className="font-bold">{product.ritual.wearHand || product.ritual.hand}</span>
                     </div>
                   )}
@@ -311,8 +337,8 @@ function ProductDetails() {
 
         {/* ---------------- FOOTER SECTION ---------------- */}
         <footer className="text-center py-20 border-t border-gray-100">
-          <h2 className="text-4xl font-serif italic text-[#5D101D] mb-6">"{product.footerQuote}"</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto uppercase tracking-widest text-xs leading-loose">{product.footerNote}</p>
+          <h2 className="text-4xl font-serif italic text-[#5D101D] mb-6">"{product.footerQuote || product.footer_quote || 'Blessed with Vedic Grace & Divine Light'}"</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto uppercase tracking-widest text-xs leading-loose">{product.footerNote || product.footer_note || 'Consecrated with Vedic Devotion • Astro Savvy Singh'}</p>
         </footer>
 
       </div>

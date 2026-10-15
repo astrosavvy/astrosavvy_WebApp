@@ -64,8 +64,8 @@ function Potli() {
         <div className="grid md:grid-cols-3 gap-10">
           {potlis.map((product) => (
             <div
-              key={product._id}
-              onClick={() => navigate(`/potli/${product.slug || product._id}`)} // ← slug with _id fallback
+              key={product.id || product._id}
+              onClick={() => navigate(`/potli/${product.slug || product.id || product._id}`)}
               className="group cursor-pointer bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden hover:-translate-y-2 transition-all duration-500"
             >
               {/* IMAGE */}
@@ -83,12 +83,12 @@ function Potli() {
                   {product.name}
                 </h2>
                 <p className="text-gray-600 text-sm line-clamp-3">
-                  {product.shortDescription || product.description}
+                  {product.shortDescription || product.short_description || product.description}
                 </p>
                 <div className="flex justify-between items-center pt-4">
                   <span className="text-xl font-bold text-[#8B0000]">
                     {product.price
-                      ? `₹${product.price.toLocaleString()}`
+                      ? `₹${Number(product.price).toLocaleString()}`
                       : "Call for Price"}
                   </span>
                   <span className="text-xs uppercase tracking-widest text-[#B27D62] font-semibold">
