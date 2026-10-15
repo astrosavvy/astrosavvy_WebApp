@@ -12,6 +12,7 @@ function Checkout() {
     email: "",
     address: "",
     city: "",
+    state: "",
     pincode: "",
   });
 
@@ -49,6 +50,9 @@ function Checkout() {
         totalAmount,
       })
     );
+
+    // Also persist directly for any legacy handlers
+    localStorage.setItem("productCheckoutData", JSON.stringify(formData));
 
     navigate("/product-payment");
   };
@@ -155,11 +159,20 @@ function Checkout() {
             className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#BC6C25]"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <input
               type="text"
               name="city"
-              placeholder="City"
+              placeholder="City *"
+              required
+              onChange={handleChange}
+              className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#BC6C25]"
+            />
+            <input
+              type="text"
+              name="state"
+              placeholder="State *"
+              required
               onChange={handleChange}
               className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#BC6C25]"
             />
@@ -167,6 +180,7 @@ function Checkout() {
               type="text"
               name="pincode"
               placeholder="Pincode *"
+              required
               onChange={handleChange}
               className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#BC6C25]"
             />

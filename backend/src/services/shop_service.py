@@ -64,8 +64,18 @@ class ShopService:
         res = query.order("created_at", desc=True).execute()
         return res.data or []
 
+    def get_shop_order_by_id(self, order_id: str) -> Optional[Dict[str, Any]]:
+        res = self.client.table("shop_orders").select("*").eq("id", order_id).execute()
+        if res.data:
+            return res.data[0]
+        return None
+
     def update_shop_order_status(self, order_id: str, status: str) -> Optional[Dict[str, Any]]:
         res = self.client.table("shop_orders").update({"order_status": status}).eq("id", order_id).execute()
+        return res.data[0] if res.data else None
+
+    def update_shop_order_shipment(self, order_id: str, shipment_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        res = self.client.table("shop_orders").update(shipment_data).eq("id", order_id).execute()
         return res.data[0] if res.data else None
 
     # ================= KUNDLI REQUESTS =================

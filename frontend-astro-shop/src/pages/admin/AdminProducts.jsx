@@ -110,91 +110,96 @@ function AdminProducts() {
             </thead>
 
             <tbody>
-              {products.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-50">
-                  {/* Image */}
-                  <td className="p-3 border">
-                    {product.images?.[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-14 h-14 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">
-                        No img
+              {products.map((product) => {
+                const prodId = product.id || product._id;
+                const activeState = product.is_active !== undefined ? product.is_active : (product.isActive !== undefined ? product.isActive : true);
+
+                return (
+                  <tr key={prodId} className="hover:bg-gray-50">
+                    {/* Image */}
+                    <td className="p-3 border">
+                      {product.images?.[0] ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-14 h-14 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                          No img
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Name */}
+                    <td className="p-3 border font-medium">{product.name}</td>
+
+                    {/* Category */}
+                    <td className="p-3 border capitalize">
+                      <span className="px-2 py-1 rounded text-sm bg-gray-100 text-gray-700">
+                        {product.category}
+                      </span>
+                    </td>
+
+                    {/* Price */}
+                    <td className="p-3 border">
+                      {localStorage.getItem("adminRole") === "store-manager" ? (
+                        <span className="text-gray-500 font-semibold">🔒 Restricted</span>
+                      ) : product.callForPrice ? (
+                        <span className="text-blue-600 text-sm">Call for Price</span>
+                      ) : (
+                        <span>₹{Number(product.price || 0).toLocaleString("en-IN")}</span>
+                      )}
+                    </td>
+
+                    {/* Stock */}
+                    <td className="p-3 border">
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        product.stock > 0
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}>
+                        {product.stock > 0 ? product.stock : "Out of Stock"}
+                      </span>
+                    </td>
+
+                    {/* Active Status */}
+                    <td className="p-3 border text-center">
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        activeState
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {activeState ? "Active" : "Hidden"}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="p-3 border">
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleToggle(prodId)}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
+                        >
+                          {activeState ? "Hide" : "Show"}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(prodId, product.name)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition text-sm"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => navigate(`/admin/products/edit/${prodId}`)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
+                        >
+                          Edit
+                        </button>
                       </div>
-                    )}
-                  </td>
-
-                  {/* Name */}
-                  <td className="p-3 border font-medium">{product.name}</td>
-
-                  {/* Category */}
-                  <td className="p-3 border capitalize">
-                    <span className="px-2 py-1 rounded text-sm bg-gray-100 text-gray-700">
-                      {product.category}
-                    </span>
-                  </td>
-
-                  {/* Price */}
-                  <td className="p-3 border">
-                    {localStorage.getItem("adminRole") === "store-manager" ? (
-                      <span className="text-gray-500 font-semibold">🔒 Restricted</span>
-                    ) : product.callForPrice ? (
-                      <span className="text-blue-600 text-sm">Call for Price</span>
-                    ) : (
-                      <span>₹{product.price?.toLocaleString("en-IN")}</span>
-                    )}
-                  </td>
-
-                  {/* Stock */}
-                  <td className="p-3 border">
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      product.stock > 0
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}>
-                      {product.stock > 0 ? product.stock : "Out of Stock"}
-                    </span>
-                  </td>
-
-                  {/* Active Status */}
-                  <td className="p-3 border text-center">
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      product.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {product.isActive ? "Active" : "Hidden"}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="p-3 border">
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        onClick={() => handleToggle(product._id)}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded transition text-sm"
-                      >
-                        {product.isActive ? "Hide" : "Show"}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product._id, product.name)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition text-sm"
-                      >
-                        Delete
-                      </button>
-                      <button
-  onClick={() => navigate(`/admin/products/edit/${product._id}`)}
-  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition text-sm"
->
-  Edit
-</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
 
               {products.length === 0 && (
                 <tr>

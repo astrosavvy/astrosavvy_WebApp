@@ -258,6 +258,14 @@ const Layout = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/products/edit/:productId"
+          element={
+            <ProtectedRoute allowedRoles={["store-manager"]}>
+              <EditProduct />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
 

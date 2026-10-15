@@ -24,6 +24,10 @@ class Settings(BaseModel):
     shop_admin_email: Optional[str] = Field(None, alias="SHOP_ADMIN_EMAIL")
     shop_admin_password: Optional[str] = Field(None, alias="SHOP_ADMIN_PASSWORD")
     shop_jwt_secret: Optional[str] = Field(None, alias="SHOP_JWT_SECRET")
+    shiprocket_api_base_url: str = Field("https://apiv2.shiprocket.in/v1/external", alias="SHIPROCKET_API_BASE_URL")
+    shiprocket_api_email: Optional[str] = Field(None, alias="SHIPROCKET_API_EMAIL")
+    shiprocket_api_password: Optional[str] = Field(None, alias="SHIPROCKET_API_PASSWORD")
+    shiprocket_pickup_nickname: str = Field("warehouse", alias="SHIPROCKET_PICKUP_NICKNAME")
 
     @field_validator("opencage_api_key", "openrouter_api_key", mode="before")
     @classmethod
@@ -54,7 +58,11 @@ def get_settings() -> Settings:
             SENDER_EMAIL=os.getenv("SENDER_EMAIL") or os.getenv("SENDPULSE_SENDER"),
             SENDER_NAME=os.getenv("SENDER_NAME"),
             SENDPULSE_SMTP_PORT=os.getenv("SENDPULSE_SMTP_PORT"),
-            META_PIXEL_ID=os.getenv("META_PIXEL_ID")
+            META_PIXEL_ID=os.getenv("META_PIXEL_ID"),
+            SHIPROCKET_API_BASE_URL=os.getenv("SHIPROCKET_API_BASE_URL", "https://apiv2.shiprocket.in/v1/external"),
+            SHIPROCKET_API_EMAIL=os.getenv("SHIPROCKET_API_EMAIL"),
+            SHIPROCKET_API_PASSWORD=os.getenv("SHIPROCKET_API_PASSWORD"),
+            SHIPROCKET_PICKUP_NICKNAME=os.getenv("SHIPROCKET_PICKUP_NICKNAME", "warehouse")
         )
     except Exception as e:
         raise RuntimeError(f"Environment validation failed: {e}")

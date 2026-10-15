@@ -1757,10 +1757,31 @@ async def local_scheduled_worker_loop():
 from src.services.shop_service import ShopService
 from src.services.blog_service import BlogService
 from src.services.shop_auth_service import ShopAuthService
+from src.services.shiprocket_service import ShiprocketService
 
 shop_service = ShopService()
 blog_service = BlogService()
 shop_auth_service = ShopAuthService()
+shiprocket_service = ShiprocketService()
+
+def map_product_keys_to_snake_case(d: Dict[str, Any]) -> Dict[str, Any]:
+    key_map = {
+        "originalPrice": "original_price",
+        "shortDescription": "short_description",
+        "benefitsAppeal": "benefits_appeal",
+        "benefitsHealing": "benefits_healing",
+        "whoIsItFor": "who_is_it_for",
+        "footerQuote": "footer_quote",
+        "footerNote": "footer_note",
+        "callForPrice": "call_for_price",
+        "isActive": "is_active",
+        "howToUse": "how_to_use",
+    }
+    res = {}
+    for k, v in d.items():
+        new_k = key_map.get(k, k)
+        res[new_k] = v
+    return res
 
 # --- Products ---
 @app.get("/api/shop/products")
@@ -1782,13 +1803,39 @@ async def api_get_product_by_slug(slug: str):
 
 @app.post("/api/shop/products/admin/add")
 async def api_add_product(req: Request, authorization: Optional[str] = Header(None)):
-    data = await req.json()
+    content_type = req.headers.get("content-type", "")
+    if "multipart/form-data" in content_type:
+        form = await req.form()
+        data = {}
+        for k, v in form.items():
+            if k == "images":
+                continue
+            try:
+                data[k] = json.loads(v)
+            except Exception:
+                data[k] = v
+    else:
+        data = await req.json()
+    data = map_product_keys_to_snake_case(data)
     new_prod = shop_service.create_product(data)
     return {"success": True, "product": new_prod}
 
 @app.put("/api/shop/products/admin/{product_id}")
 async def api_update_product(product_id: str, req: Request, authorization: Optional[str] = Header(None)):
-    data = await req.json()
+    content_type = req.headers.get("content-type", "")
+    if "multipart/form-data" in content_type:
+        form = await req.form()
+        data = {}
+        for k, v in form.items():
+            if k == "images":
+                continue
+            try:
+                data[k] = json.loads(v)
+            except Exception:
+                data[k] = v
+    else:
+        data = await req.json()
+    data = map_product_keys_to_snake_case(data)
     updated = shop_service.update_product(product_id, data)
     return {"success": True, "product": updated}
 
@@ -1820,8 +1867,32 @@ async def api_shop_create_order(req: Request):
         print(f"[ERROR] Shop Create Order Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create order: {e}")
 
+def auto_dispatch_order_shiprocket(order_id: str):
+    try:
+        ord_record = shop_service.get_shop_order_by_id(order_id)
+        if not ord_record:
+            return
+        if ord_record.get("shipment_id"):
+            return
+        
+        result = shiprocket_service.fulfill_store_order(ord_record)
+        if result.get("success"):
+            update_data = {
+                "shiprocket_order_id": result.get("shiprocket_order_id"),
+                "shipment_id": result.get("shipment_id"),
+                "awb_code": result.get("awb_code"),
+                "courier_name": result.get("courier_name"),
+                "label_url": result.get("label_url"),
+                "invoice_url": result.get("invoice_url"),
+                "order_status": "shipped"
+            }
+            shop_service.update_shop_order_shipment(order_id, update_data)
+            print(f"[Shiprocket] Successfully auto-dispatched order {order_id} via {result.get('courier_name')} (AWB: {result.get('awb_code')})")
+    except Exception as e:
+        print(f"[Shiprocket] Notice during auto-dispatch for order {order_id}: {e}")
+
 @app.post("/api/shop/payment/verify")
-async def api_shop_verify_payment(req: Request):
+async def api_shop_verify_payment(req: Request, background_tasks: BackgroundTasks):
     body = await req.json()
     razorpay_order_id = body.get("razorpay_order_id")
     razorpay_payment_id = body.get("razorpay_payment_id")
@@ -1839,6 +1910,13 @@ async def api_shop_verify_payment(req: Request):
     verified = payment_srv.verify_payment_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
     if not verified:
         raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    # Detect order type if omitted by client
+    if not order_type:
+        if cart_items:
+            order_type = "product"
+        elif kundli_data:
+            order_type = "kundli"
 
     if order_type == "kundli":
         if not kundli_data:
@@ -1862,6 +1940,15 @@ async def api_shop_verify_payment(req: Request):
     if order_type == "product":
         if not cart_items:
             raise HTTPException(status_code=400, detail="Cart items missing")
+        
+        pincode = str(customer.get("pincode", "")).strip()
+        city = str(customer.get("city", "")).strip()
+        state = str(customer.get("state", "")).strip()
+        raw_address = str(customer.get("address", "")).strip()
+        full_address = raw_address
+        if pincode and pincode not in full_address:
+            full_address = f"{raw_address}, {city}, {state} - {pincode}".strip(", -")
+
         orders_to_save = []
         for item in cart_items:
             cat = str(item.get("category", "")).lower()
@@ -1874,12 +1961,21 @@ async def api_shop_verify_payment(req: Request):
                 "customer_name": customer.get("name", "Customer"),
                 "email": customer.get("email", ""),
                 "phone": customer.get("phone", ""),
-                "address": customer.get("address", ""),
+                "address": full_address,
+                "city": city,
+                "state": state,
+                "pincode": pincode,
                 "payment_id": razorpay_payment_id,
                 "payment_status": "paid",
                 "order_status": "received"
             })
         saved_orders = shop_service.create_shop_orders(orders_to_save)
+
+        # Trigger background automatic fulfillment via Shiprocket
+        for saved in saved_orders:
+            if saved.get("id"):
+                background_tasks.add_task(auto_dispatch_order_shiprocket, saved["id"])
+
         return {"success": True, "message": "Product order saved successfully", "orders": saved_orders}
 
     raise HTTPException(status_code=400, detail="Invalid order type")
@@ -1929,6 +2025,66 @@ async def api_update_shop_order_status(order_id: str, req: Request, authorizatio
         raise HTTPException(status_code=400, detail="Order status required")
     updated = shop_service.update_shop_order_status(order_id, status)
     return {"success": True, "order": updated}
+
+# --- Shiprocket Logistics Endpoints ---
+@app.post("/api/shop/shiprocket/create-shipment/{order_id}")
+async def api_shiprocket_create_shipment(order_id: str, authorization: Optional[str] = Header(None)):
+    """Dispatches a store order via Shiprocket: creates adhoc order, assigns AWB, schedules pickup, generates label & invoice."""
+    ord_record = shop_service.get_shop_order_by_id(order_id)
+    if not ord_record:
+        raise HTTPException(status_code=404, detail="Order not found")
+    try:
+        result = shiprocket_service.fulfill_store_order(ord_record)
+        update_data = {
+            "shiprocket_order_id": result.get("shiprocket_order_id"),
+            "shipment_id": result.get("shipment_id"),
+            "awb_code": result.get("awb_code"),
+            "courier_name": result.get("courier_name"),
+            "label_url": result.get("label_url"),
+            "invoice_url": result.get("invoice_url"),
+            "order_status": "shipped"
+        }
+        updated = shop_service.update_shop_order_shipment(order_id, update_data)
+        return {"success": True, "shipment": result, "order": updated}
+    except Exception as e:
+        print(f"[Shiprocket Error]: {e}")
+        raise HTTPException(status_code=500, detail=f"Shiprocket fulfillment failed: {e}")
+
+@app.get("/api/shop/shiprocket/serviceability")
+async def api_shiprocket_serviceability(delivery_pincode: str, weight: float = 0.5):
+    """Checks courier companies, rates, and transit days for a delivery pincode."""
+    try:
+        companies = shiprocket_service.get_serviceability(delivery_pincode=delivery_pincode, weight_kg=weight)
+        return {"success": True, "available_couriers": companies}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check serviceability: {e}")
+
+@app.get("/api/shop/shiprocket/track/{awb_code}")
+async def api_shiprocket_track(awb_code: str):
+    """Fetches real-time parcel tracking via AWB code."""
+    try:
+        tracking = shiprocket_service.track_awb(awb_code)
+        return {"success": True, "tracking": tracking}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Tracking query failed: {e}")
+
+@app.get("/api/shop/shiprocket/label/{shipment_id}")
+async def api_shiprocket_label(shipment_id: int):
+    """Generates and returns thermal shipping label PDF URL."""
+    try:
+        url = shiprocket_service.get_label_url(shipment_id)
+        return {"success": True, "label_url": url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Label generation failed: {e}")
+
+@app.get("/api/shop/shiprocket/invoice/{order_id}")
+async def api_shiprocket_invoice(order_id: int):
+    """Generates and returns commercial GST invoice PDF URL."""
+    try:
+        url = shiprocket_service.get_invoice_url(order_id)
+        return {"success": True, "invoice_url": url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Invoice generation failed: {e}")
 
 # --- Blogs ---
 @app.get("/api/shop/blogs")

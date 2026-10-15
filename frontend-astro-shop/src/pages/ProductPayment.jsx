@@ -8,9 +8,16 @@ function ProductPayment() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const checkoutData = JSON.parse(
-    localStorage.getItem("productCheckoutData")
-  );
+  let customerDetails = {};
+  try {
+    const rawData = localStorage.getItem("checkoutData") || localStorage.getItem("productCheckoutData");
+    if (rawData) {
+      const parsed = JSON.parse(rawData);
+      customerDetails = parsed.formData || parsed;
+    }
+  } catch (err) {
+    console.error("Failed to parse checkout data:", err);
+  }
 
   /* -------------------------------------------------- */
   /* SAFETY GUARD                                       */
@@ -41,6 +48,16 @@ function ProductPayment() {
     try {
       setLoading(true);
 
+      const customerPayload = {
+        name: customerDetails?.name || "Customer",
+        phone: customerDetails?.phone || "",
+        email: customerDetails?.email || "",
+        address: customerDetails?.address || "",
+        city: customerDetails?.city || "",
+        state: customerDetails?.state || "",
+        pincode: customerDetails?.pincode || "",
+      };
+
       /* 1️⃣ CREATE RAZORPAY ORDER */
       const { data } = await api.post(
         "/api/shop/payment/create-order",
@@ -54,15 +71,11 @@ function ProductPayment() {
           razorpay_payment_id: `pay_mock_${Date.now()}`,
           razorpay_signature: "mock_signature",
           cartItems: cartItems,
-          customer: {
-            name: checkoutData?.name,
-            phone: checkoutData?.phone,
-            email: checkoutData?.email,
-            address: checkoutData?.address,
-          },
+          customer: customerPayload,
         });
         if (verifyRes.data?.success) {
           clearCart();
+          localStorage.removeItem("checkoutData");
           localStorage.removeItem("productCheckoutData");
           window.location.href = "/payment-success";
         } else {
@@ -99,18 +112,13 @@ function ProductPayment() {
 
                 // 🔥 MUST MATCH BACKEND
                 cartItems: cartItems,
-
-                customer: {
-                  name: checkoutData?.name,
-                  phone: checkoutData?.phone,
-                  email: checkoutData?.email,
-                  address: checkoutData?.address,
-                },
+                customer: customerPayload,
               }
             );
 
             if (verifyRes.data.success) {
               clearCart();
+              localStorage.removeItem("checkoutData");
               localStorage.removeItem("productCheckoutData");
               window.location.href = "/payment-success";
             } else {
@@ -188,7 +196,20 @@ function ProductPayment() {
 
         </div>
 
-        <div className="flex justify-between items-center mt-8 text-lg font-semibold border-t pt-6">
+        {customerDetails?.name && (
+          <div className="mt-6 bg-[#f9f7f3] border border-[#e8ded1] rounded-xl p-4 text-sm text-[#1B2624]">
+            <p className="font-semibold text-[#BC6C25] mb-1">📍 Deliver To:</p>
+            <p className="font-medium">{customerDetails.name} • {customerDetails.phone}</p>
+            <p className="text-gray-600 mt-0.5">{customerDetails.address}</p>
+            {(customerDetails.city || customerDetails.pincode) && (
+              <p className="text-gray-500 text-xs mt-1">
+                {[customerDetails.city, customerDetails.state, customerDetails.pincode].filter(Boolean).join(", ")}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mt-6 text-lg font-semibold border-t pt-6">
           <span>Total Payable</span>
           <span>₹{totalAmount}</span>
         </div>

@@ -58,6 +58,16 @@ CREATE TABLE IF NOT EXISTS shop_orders (
     payment_status TEXT DEFAULT 'paid',
     order_status TEXT DEFAULT 'received'
         CHECK (order_status IN ('received','processing','shipped','delivered','cancelled')),
+    shiprocket_order_id TEXT,
+    shipment_id TEXT,
+    awb_code TEXT,
+    courier_name TEXT,
+    label_url TEXT,
+    invoice_url TEXT,
+    manifest_url TEXT,
+    city TEXT,
+    state TEXT,
+    pincode TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

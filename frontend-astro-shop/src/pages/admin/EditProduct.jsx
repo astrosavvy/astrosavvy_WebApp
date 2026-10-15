@@ -87,8 +87,8 @@ function EditProduct() {
           },
         });
 
-        // Find the specific product from the list
-        const product = data.products.find((p) => p._id === productId);
+        // Find the specific product from the list by id, _id, or slug
+        const product = data.products.find((p) => (p.id || p._id) === productId || p.slug === productId);
 
         if (!product) {
           alert("Product not found");
@@ -101,24 +101,24 @@ function EditProduct() {
         setCategory(product.category || "bracelet");
         setOrigin(product.origin || "");
         setPrice(product.price?.toString() || "");
-        setOriginalPrice(product.originalPrice?.toString() || "");
+        setOriginalPrice((product.originalPrice ?? product.original_price)?.toString() || "");
         setStock(product.stock?.toString() || "");
-        setCallForPrice(product.callForPrice || false);
-        setIsActive(product.isActive !== undefined ? product.isActive : true);
+        setCallForPrice(product.callForPrice || product.call_for_price || false);
+        setIsActive(product.is_active !== undefined ? product.is_active : (product.isActive !== undefined ? product.isActive : true));
         setExistingImages(product.images || []);
 
         // ── Populate bracelet fields ───────────────────────────────────────────
-        setShortDescription(product.shortDescription || "");
+        setShortDescription(product.shortDescription || product.short_description || "");
         setDescription(product.description || "");
         setSymbolism((product.symbolism || []).join(", "));
-        setBenefitsAppeal((product.benefitsAppeal || []).join(", "));
-        setBenefitsHealing((product.benefitsHealing || []).join(", "));
-        setWhoIsItFor((product.whoIsItFor || []).join(", "));
-        setFooterQuote(product.footerQuote || "");
-        setFooterNote(product.footerNote || "");
+        setBenefitsAppeal((product.benefitsAppeal || product.benefits_appeal || []).join(", "));
+        setBenefitsHealing((product.benefitsHealing || product.benefits_healing || []).join(", "));
+        setWhoIsItFor((product.whoIsItFor || product.who_is_it_for || []).join(", "));
+        setFooterQuote(product.footerQuote || product.footer_quote || "");
+        setFooterNote(product.footerNote || product.footer_note || "");
         setEnergized(product.ritual?.energized || "");
         setWearDay(product.ritual?.wearDay || "");
-        setWearHand(product.ritual?.wearHand || "");
+        setWearHand(product.ritual?.wearHand || product.ritual?.hand || "");
         setInstruction(product.ritual?.instruction || "");
 
         // ── Populate rudraksha fields ──────────────────────────────────────────
@@ -130,7 +130,7 @@ function EditProduct() {
         // ── Populate potli fields ──────────────────────────────────────────────
         setContents((product.contents || []).join(", "));
         setPurpose(product.purpose || "");
-        setHowToUse(product.howToUse || "");
+        setHowToUse(product.howToUse || product.how_to_use || "");
         setWeight(product.weight || "");
       } catch (error) {
         console.error(error);
