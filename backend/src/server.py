@@ -1903,13 +1903,20 @@ async def api_shop_verify_payment(req: Request, background_tasks: BackgroundTask
     cart_items = body.get("cartItems", [])
     customer = body.get("customer", {})
 
-    if not razorpay_order_id or not razorpay_payment_id or not razorpay_signature:
-        raise HTTPException(status_code=400, detail="Missing payment details")
+    is_cod = bool(body.get("is_cod", False))
+    payment_method = "cod" if is_cod else "prepaid"
 
-    payment_srv = PaymentService()
-    verified = payment_srv.verify_payment_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
-    if not verified:
-        raise HTTPException(status_code=400, detail="Invalid payment signature")
+    if not is_cod:
+        if not razorpay_order_id or not razorpay_payment_id or not razorpay_signature:
+            raise HTTPException(status_code=400, detail="Missing payment details")
+
+        payment_srv = PaymentService()
+        verified = payment_srv.verify_payment_signature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
+        if not verified:
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+    else:
+        razorpay_order_id = razorpay_order_id or f"cod_order_{int(time.time())}"
+        razorpay_payment_id = razorpay_payment_id or f"cod_pay_{int(time.time()*1000)}"
 
     # Detect order type if omitted by client
     if not order_type:
@@ -1966,7 +1973,7 @@ async def api_shop_verify_payment(req: Request, background_tasks: BackgroundTask
                 "state": state,
                 "pincode": pincode,
                 "payment_id": razorpay_payment_id,
-                "payment_status": "paid",
+                "payment_status": "cod" if is_cod else "paid",
                 "order_status": "received"
             })
         saved_orders = shop_service.create_shop_orders(orders_to_save)

@@ -258,7 +258,7 @@ class ShiprocketService:
                     "hsn": hsn
                 }
             ],
-            "payment_method": "Prepaid",
+            "payment_method": "COD" if (str(order.get("payment_status", "")).lower() == "cod" or str(order.get("payment_method", "")).lower() == "cod") else "Prepaid",
             "shipping_charges": 0.0,
             "giftwrap_charges": 0.0,
             "transaction_charges": 0.0,
