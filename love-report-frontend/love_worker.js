@@ -7,6 +7,8 @@
  * 2. Same-Origin Server-Side Proxying for /api/* requests (Zero CORS/Network Errors)
  * 3. Clean Headers for Razorpay Floating Checkout Window
  * 4. Explicit UTF-8 Content-Type Headers to prevent character/emoji encoding corruption across all devices
+ *
+ * @version 1.0.1
  */
 
 export default {
