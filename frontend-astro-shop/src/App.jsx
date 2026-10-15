@@ -98,7 +98,7 @@ const Layout = () => {
 
   return (
     <>
-      {!isAdminRoute && <ConsultationPopup />}
+      {isHomePage && <ConsultationPopup />}
       {!isAdminRoute && <Navbar />}
 
       <Routes>

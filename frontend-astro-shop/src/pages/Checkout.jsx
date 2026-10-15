@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import api from "../utils/axios";
-import { ArrowLeft, Lock, ShieldCheck, Truck, Sparkles, Check } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck, Truck, Sparkles, Minus, Plus } from "lucide-react";
 
 function Checkout() {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, updateQuantity, clearCart } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -20,7 +20,6 @@ function Checkout() {
     country: "India",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'razorpay' | 'cod'
   const [agreedTerms, setAgreedTerms] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -53,8 +52,7 @@ function Checkout() {
     0
   );
 
-  const deliveryCharge = paymentMethod === "cod" ? 49 : 0;
-  const finalTotal = Math.max(0, subtotal + deliveryCharge - appliedDiscount);
+  const finalTotal = Math.max(0, subtotal - appliedDiscount);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -127,37 +125,7 @@ function Checkout() {
     localStorage.setItem("productCheckoutData", JSON.stringify(customerPayload));
 
     // ==============================================================
-    // 1. CASH ON DELIVERY (COD)
-    // ==============================================================
-    if (paymentMethod === "cod") {
-      try {
-        const verifyRes = await api.post("/api/shop/payment/verify", {
-          is_cod: true,
-          amount: finalTotal,
-          orderType: "product",
-          cartItems: cartItems,
-          customer: customerPayload,
-        });
-
-        if (verifyRes.data?.success) {
-          clearCart();
-          localStorage.removeItem("checkoutData");
-          localStorage.removeItem("productCheckoutData");
-          window.location.href = "/payment-success";
-        } else {
-          setErrorMessage(verifyRes.data?.detail || "Order creation failed. Please try again.");
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("COD Order creation error:", err);
-        setErrorMessage("Failed to place Cash on Delivery order. Please try again or use Razorpay.");
-        setLoading(false);
-      }
-      return;
-    }
-
-    // ==============================================================
-    // 2. RAZORPAY PREPAID CHECKOUT
+    // RAZORPAY PREPAID CHECKOUT
     // ==============================================================
     try {
       const { data } = await api.post("/api/shop/payment/create-order", {
@@ -425,90 +393,39 @@ function Checkout() {
               </div>
             </div>
 
-            {/* 2. PAYMENT METHOD */}
+            {/* 2. PAYMENT METHOD (100% PREPAID RAZORPAY) */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-[#EBE7DF]">
               <h2 className="text-xl font-semibold text-[#1B2624] mb-4">
                 Payment Method
               </h2>
 
-              <div className="space-y-3">
-                {/* Option 1: Razorpay Secure Checkout */}
-                <div
-                  onClick={() => setPaymentMethod("razorpay")}
-                  className={`border rounded-2xl p-4.5 cursor-pointer transition flex items-start gap-3.5 ${
-                    paymentMethod === "razorpay"
-                      ? "border-[#C9A96E] bg-[#FDFBF7] ring-1 ring-[#C9A96E]"
-                      : "border-[#E8E4DC] hover:border-gray-300 bg-white"
-                  }`}
-                >
-                  <div className="mt-0.5">
-                    <div
-                      className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center ${
-                        paymentMethod === "razorpay"
-                          ? "border-[#B88E2F] bg-white"
-                          : "border-gray-300 bg-white"
-                      }`}
-                    >
-                      {paymentMethod === "razorpay" && (
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#B88E2F]" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-semibold text-sm text-[#1B2624]">
-                        Razorpay Secure Checkout
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] bg-white border border-[#E2DDD3] text-gray-600 px-2 py-0.5 rounded font-medium">
-                          UPI
-                        </span>
-                        <span className="text-[10px] bg-white border border-[#E2DDD3] text-gray-600 px-2 py-0.5 rounded font-medium">
-                          Cards
-                        </span>
-                        <span className="text-[10px] bg-white border border-[#E2DDD3] text-gray-600 px-2 py-0.5 rounded font-medium">
-                          Net Banking
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      UPI, Credit/Debit Cards, Net Banking & Wallets
-                    </p>
+              <div className="border border-[#C9A96E] bg-[#FDFBF7] ring-1 ring-[#C9A96E] rounded-2xl p-4.5 flex items-start gap-3.5">
+                <div className="mt-0.5">
+                  <div className="w-4.5 h-4.5 rounded-full border border-[#B88E2F] bg-white flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#B88E2F]" />
                   </div>
                 </div>
 
-                {/* Option 2: Cash on Delivery */}
-                <div
-                  onClick={() => setPaymentMethod("cod")}
-                  className={`border rounded-2xl p-4.5 cursor-pointer transition flex items-start gap-3.5 ${
-                    paymentMethod === "cod"
-                      ? "border-[#C9A96E] bg-[#FDFBF7] ring-1 ring-[#C9A96E]"
-                      : "border-[#E8E4DC] hover:border-gray-300 bg-white"
-                  }`}
-                >
-                  <div className="mt-0.5">
-                    <div
-                      className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center ${
-                        paymentMethod === "cod"
-                          ? "border-[#B88E2F] bg-white"
-                          : "border-gray-300 bg-white"
-                      }`}
-                    >
-                      {paymentMethod === "cod" && (
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#B88E2F]" />
-                      )}
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold text-sm text-[#1B2624]">
+                      Razorpay Secure Checkout
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] bg-white border border-[#E2DDD3] text-gray-600 px-2 py-0.5 rounded font-medium">
+                        UPI
+                      </span>
+                      <span className="text-[10px] bg-white border border-[#E2DDD3] text-gray-600 px-2 py-0.5 rounded font-medium">
+                        Cards
+                      </span>
+                      <span className="text-[10px] bg-white border border-[#E2DDD3] text-gray-600 px-2 py-0.5 rounded font-medium">
+                        Net Banking
+                      </span>
                     </div>
                   </div>
-
-                  <div className="flex-1">
-                    <span className="font-semibold text-sm text-[#1B2624]">
-                      Cash on Delivery • ₹49 extra
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Payment due on delivery • Standard delivery
-                    </p>
-                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Instant & Secure Payment via UPI (GPay, PhonePe, Paytm), Cards & Net Banking
+                  </p>
                 </div>
               </div>
 
@@ -572,9 +489,10 @@ function Checkout() {
                 Your Order
               </h2>
 
-              {/* PRODUCTS LIST */}
+              {/* PRODUCTS LIST WITH QUANTITY CONTROLLERS */}
               <div className="space-y-3 mb-6">
                 {cartItems.map((item, idx) => {
+                  const itemId = item._id || item.id;
                   const displayName =
                     item.category === "rudraksha"
                       ? item.title || item.name
@@ -598,9 +516,31 @@ function Checkout() {
                           <h3 className="text-sm font-semibold text-[#1B2624] truncate">
                             {displayName}
                           </h3>
-                          <span className="inline-block text-[11px] bg-white border border-[#E8E4DC] text-gray-500 px-2 py-0.5 rounded-md mt-1 font-medium">
-                            Qty: {itemQty}
-                          </span>
+
+                          {/* INTERACTIVE QUANTITY CONTROLLER */}
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className="inline-flex items-center border border-[#E8E4DC] rounded-lg bg-white overflow-hidden shadow-2xs">
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(itemId, itemQty - 1)}
+                                className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-100 transition border-r border-[#E8E4DC]"
+                                title="Decrease quantity"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="px-2.5 py-0.5 text-xs font-semibold text-[#1B2624] min-w-[28px] text-center select-none">
+                                Qty: {itemQty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(itemId, itemQty + 1)}
+                                className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-100 transition border-l border-[#E8E4DC]"
+                                title="Increase quantity"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -655,11 +595,7 @@ function Checkout() {
 
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery:</span>
-                  {deliveryCharge > 0 ? (
-                    <span className="font-medium text-[#1B2624]">₹{deliveryCharge}</span>
-                  ) : (
-                    <span className="font-medium text-emerald-700">Free</span>
-                  )}
+                  <span className="font-medium text-emerald-700">Free</span>
                 </div>
 
                 {appliedDiscount > 0 && (
