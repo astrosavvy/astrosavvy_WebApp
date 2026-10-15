@@ -62,6 +62,7 @@ import BlogDetails from "./pages/BlogDetails";
 // ── NEW: Product Admin Pages ──────────────────────────────────────────────────
 import AdminProducts from "./pages/admin/AdminProducts";
 import AddProduct from "./pages/admin/AddProduct";
+import EditProduct from "./pages/admin/EditProduct";
 
 // ==============================
 // META PIXEL TRACKING
