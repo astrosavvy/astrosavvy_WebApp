@@ -23,10 +23,10 @@ function ProductDetails() {
   }, [slug]);
 
   useEffect(() => {
-    if (!product?.images?.length) return;
+    if (!product?.images?.length || product.images.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentImage(prev => (prev + 1) % product.images.length);
-    }, 4000);
+    }, 12000); // 12 seconds (3x previous 4s)
     return () => clearInterval(interval);
   }, [product]);
 
@@ -57,7 +57,7 @@ function ProductDetails() {
       {/* ================= HERO SECTION ================= */}
       <div className="max-w-7xl mx-auto px-4 py-12 lg:py-20 grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
-        {/* IMAGE CAROUSEL */}
+        {/* IMAGE CAROUSEL & THUMBNAILS */}
         <div className="relative group">
           <div className={`absolute -inset-4 rounded-[3rem] blur-2xl opacity-20 ${isRudraksha ? 'bg-orange-200' : isPotli ? 'bg-amber-200' : 'bg-rose-200'}`} />
           <div className="relative bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/50">
@@ -74,6 +74,30 @@ function ProductDetails() {
               </div>
             )}
           </div>
+
+          {/* E-COMMERCE THUMBNAIL STRIP */}
+          {product.images?.length > 1 && (
+            <div className="flex items-center gap-3 mt-5 overflow-x-auto pb-2 px-1">
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setCurrentImage(idx)}
+                  className={`relative shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all duration-300 ${
+                    currentImage === idx
+                      ? "border-[#8B0000] ring-2 ring-[#8B0000]/30 scale-105 shadow-md bg-white"
+                      : "border-transparent opacity-70 hover:opacity-100 hover:border-gray-300 bg-white shadow-xs"
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`${product.name} view ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* CORE INFO */}
