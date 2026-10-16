@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import api from "../utils/axios";
-import { ArrowLeft, Lock, ShieldCheck, Truck, Sparkles, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck, Truck, Sparkles, Minus, Plus, Trash2 } from "lucide-react";
 
 function Checkout() {
-  const { cartItems, updateQuantity, clearCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -517,29 +517,41 @@ function Checkout() {
                             {displayName}
                           </h3>
 
-                          {/* INTERACTIVE QUANTITY CONTROLLER */}
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            <div className="inline-flex items-center border border-[#E8E4DC] rounded-lg bg-white overflow-hidden shadow-2xs">
+                          {/* MINIMALIST QUANTITY CONTROLLER */}
+                          <div className="flex items-center gap-2.5 mt-2">
+                            <div className="inline-flex items-center bg-white border border-[#E2DDD3] rounded-full p-0.5 shadow-2xs">
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(itemId, itemQty - 1)}
-                                className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-100 transition border-r border-[#E8E4DC]"
+                                disabled={itemQty <= 1}
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-gray-500 hover:text-[#1B2624] hover:bg-[#F2ECE1] disabled:opacity-25 disabled:hover:bg-transparent disabled:cursor-not-allowed transition active:scale-90"
                                 title="Decrease quantity"
                               >
-                                <Minus className="w-3 h-3" />
+                                <Minus className="w-2.5 h-2.5 stroke-[2.5]" />
                               </button>
-                              <span className="px-2.5 py-0.5 text-xs font-semibold text-[#1B2624] min-w-[28px] text-center select-none">
-                                Qty: {itemQty}
+                              <span className="w-6 text-center text-xs font-semibold text-[#1B2624] tabular-nums select-none">
+                                {itemQty}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(itemId, itemQty + 1)}
-                                className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-100 transition border-l border-[#E8E4DC]"
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-gray-500 hover:text-[#1B2624] hover:bg-[#F2ECE1] transition active:scale-90"
                                 title="Increase quantity"
                               >
-                                <Plus className="w-3 h-3" />
+                                <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
                               </button>
                             </div>
+
+                            {cartItems.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeFromCart(itemId)}
+                                className="text-[11px] text-gray-400 hover:text-red-600 transition underline underline-offset-2"
+                                title="Remove item"
+                              >
+                                Remove
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
