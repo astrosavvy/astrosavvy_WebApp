@@ -1,8 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import api from "../utils/axios";
-import { ArrowLeft, Lock, ShieldCheck, Truck, Sparkles, Minus, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Lock,
+  ShieldCheck,
+  Truck,
+  Sparkles,
+  Minus,
+  Plus,
+  Trash2,
+  ChevronDown,
+  Check,
+} from "lucide-react";
+
+// Updated list of all 28 Indian States and 8 Union Territories
+const INDIAN_STATES = [
+  "Andaman and Nicobar Islands",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chandigarh",
+  "Chhattisgarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jammu and Kashmir",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Ladakh",
+  "Lakshadweep",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Puducherry",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+];
 
 function Checkout() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -29,6 +80,24 @@ function Checkout() {
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [couponSuccess, setCouponSuccess] = useState("");
   const [couponError, setCouponError] = useState("");
+
+  // State dropdown autocomplete
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+  const stateRef = useRef(null);
+
+  const filteredStates = INDIAN_STATES.filter((st) =>
+    st.toLowerCase().includes((formData.state || "").trim().toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (stateRef.current && !stateRef.current.contains(e.target)) {
+        setShowStateDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!cartItems || cartItems.length === 0) {
     return (
@@ -363,19 +432,83 @@ function Checkout() {
 
                 {/* State & Country */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
+                  <div className="relative" ref={stateRef}>
                     <label className="block text-xs font-semibold text-[#2C3E35] mb-1.5">
                       State <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      name="state"
-                      required
-                      value={formData.state}
-                      onChange={handleChange}
-                      placeholder="State"
-                      className="w-full bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl px-4 py-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#385246] focus:bg-white transition"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="state"
+                        required
+                        autoComplete="off"
+                        value={formData.state}
+                        onFocus={() => setShowStateDropdown(true)}
+                        onChange={(e) => {
+                          handleChange(e);
+                          setShowStateDropdown(true);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") setShowStateDropdown(false);
+                          if (e.key === "Enter" && filteredStates.length > 0 && showStateDropdown) {
+                            e.preventDefault();
+                            setFormData((prev) => ({ ...prev, state: filteredStates[0] }));
+                            setShowStateDropdown(false);
+                          }
+                        }}
+                        placeholder="Type to search state..."
+                        className="w-full bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl px-4 py-3 pr-10 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#385246] focus:bg-white transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowStateDropdown((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-1 transition"
+                        tabIndex={-1}
+                        title="Toggle state list"
+                      >
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            showStateDropdown ? "rotate-180 text-[#385246]" : ""
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* LIVE SHORTENING STATE DROPDOWN LIST */}
+                    {showStateDropdown && (
+                      <div className="absolute left-0 right-0 mt-1.5 bg-white border border-[#E8E4DC] rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto py-1.5 divide-y divide-[#FAF7F2]">
+                        {filteredStates.length > 0 ? (
+                          filteredStates.map((st) => {
+                            const isSelected =
+                              formData.state.trim().toLowerCase() === st.toLowerCase();
+                            return (
+                              <button
+                                key={st}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setFormData((prev) => ({ ...prev, state: st }));
+                                  setShowStateDropdown(false);
+                                  if (errorMessage) setErrorMessage("");
+                                }}
+                                className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors ${
+                                  isSelected
+                                    ? "bg-[#F5F1E9] text-[#1B2624] font-semibold"
+                                    : "text-gray-700 hover:bg-[#FAF8F5] hover:text-[#1B2624]"
+                                }`}
+                              >
+                                <span>{st}</span>
+                                {isSelected && <Check className="w-4 h-4 text-[#385246] shrink-0" />}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="px-4 py-3 text-xs text-gray-400 text-center">
+                            No matching state found
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#2C3E35] mb-1.5">
